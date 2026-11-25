@@ -195,6 +195,9 @@ export default function Home() {
           <Link href="/track-request">
             Track My Request
           </Link>
+          <Link href="/customer/login">
+            Customer Portal
+          </Link>
         </nav>
 
         <a

@@ -176,7 +176,7 @@ export async function POST(request: Request) {
       .toUpperCase()}`;
 
     // 10. Create the quotation as a draft.
-    const quotation = await prisma.serviceQuotation.create({
+    await prisma.serviceQuotation.create({
       data: {
         quotationNumber,
         requestId: serviceRequest.id,

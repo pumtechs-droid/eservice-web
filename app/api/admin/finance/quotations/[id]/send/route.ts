@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
+import { sendQuotationEmail } from "@/lib/email";
 
 type RouteContext = {
   params: Promise<{
@@ -93,10 +94,12 @@ export async function POST(
       where: {
         id,
       },
-      select: {
-        id: true,
-        status: true,
-        validUntil: true,
+      include: {
+        request: {
+          include: {
+            customer: true,
+          },
+        },
       },
     });
 
@@ -151,6 +154,26 @@ export async function POST(
         id,
         "sendError"
       );
+    }
+
+    if (quotation.request.customer.email) {
+      try {
+        await sendQuotationEmail({
+          to: quotation.request.customer.email,
+          customerName: quotation.request.customer.fullName,
+          quotationNumber: quotation.quotationNumber,
+          amount: `${quotation.currency} ${Number(quotation.amount).toLocaleString("en-KE", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`,
+          validUntil: quotation.validUntil
+            ? quotation.validUntil.toLocaleDateString("en-GB")
+            : "No expiry date",
+          description: quotation.description,
+        });
+      } catch (emailError) {
+        console.error("QUOTATION_EMAIL_ERROR:", emailError);
+      }
     }
 
     return redirectToQuotation(

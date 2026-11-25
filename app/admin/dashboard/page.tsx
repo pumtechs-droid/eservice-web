@@ -142,6 +142,10 @@ async function AdminDashboardContent() {
             <span>▥</span> Analytics & Reports
           </Link>
 
+          <Link href="/admin/cms" className="admin-sidebar-link">
+            <span>◇</span> Content Management
+          </Link>
+
           <Link href="/admin/settings" className="admin-sidebar-link">
             <span>⚙</span> Settings
           </Link>

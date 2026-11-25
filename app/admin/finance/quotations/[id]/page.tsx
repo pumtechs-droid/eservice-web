@@ -158,10 +158,11 @@ async function QuotationDetailsContent({
 
       {sent === "1" && (
         <div className="quotation-update-success">
-          <strong>✓ Quotation marked as sent.</strong>
+          <strong>✓ Quotation sent.</strong>
           <span>
-            The sending administrator and timestamp have been recorded.
-            Customer notification has not yet been configured.
+            The sending administrator and timestamp have been recorded,
+            and an email notification is sent when Resend is configured
+            and the customer has an email address.
           </span>
         </div>
       )}
