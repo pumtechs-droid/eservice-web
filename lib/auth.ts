@@ -3,6 +3,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
+import { prisma } from "@/lib/prisma";
 
 const COOKIE_NAME = "esh_admin_session";
 const SESSION_DURATION = 60 * 60 * 8;
@@ -23,6 +24,7 @@ export type AdminSession = {
   id: string;
   email: string;
   role: AdminRole;
+  accountUpdatedAt: number;
 };
 
 function cookieOptions() {
@@ -44,6 +46,7 @@ export async function createAdminSession(
   const token = await new SignJWT({
     email: admin.email,
     role: admin.role,
+    accountUpdatedAt: admin.accountUpdatedAt,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(admin.id)
@@ -64,34 +67,51 @@ export async function getAdminSession(): Promise<AdminSession | null> {
     return null;
   }
 
+  let payload;
   try {
-    const { payload } = await jwtVerify(token, secretKey, {
+    ({ payload } = await jwtVerify(token, secretKey, {
       algorithms: ["HS256"],
-    });
-
-    const validRoles: AdminRole[] = [
-      "SUPER_ADMIN",
-      "ADMIN",
-      "STAFF",
-    ];
-
-    if (
-      typeof payload.sub !== "string" ||
-      typeof payload.email !== "string" ||
-      typeof payload.role !== "string" ||
-      !validRoles.includes(payload.role as AdminRole)
-    ) {
-      return null;
-    }
-
-    return {
-      id: payload.sub,
-      email: payload.email,
-      role: payload.role as AdminRole,
-    };
+    }));
   } catch {
     return null;
   }
+
+  const validRoles: AdminRole[] = [
+    "SUPER_ADMIN",
+    "ADMIN",
+    "STAFF",
+  ];
+
+  if (
+    typeof payload.sub !== "string" ||
+    typeof payload.email !== "string" ||
+    typeof payload.role !== "string" ||
+    !validRoles.includes(payload.role as AdminRole) ||
+    typeof payload.accountUpdatedAt !== "number" ||
+    !Number.isFinite(payload.accountUpdatedAt)
+  ) {
+    return null;
+  }
+
+  const admin = await prisma.adminUser.findUnique({
+    where: { id: payload.sub },
+    select: { isActive: true, updatedAt: true },
+  });
+
+  if (
+    !admin ||
+    !admin.isActive ||
+    admin.updatedAt.getTime() !== payload.accountUpdatedAt
+  ) {
+    return null;
+  }
+
+  return {
+    id: payload.sub,
+    email: payload.email,
+    role: payload.role as AdminRole,
+    accountUpdatedAt: payload.accountUpdatedAt,
+  };
 }
 
 export async function clearAdminSession(): Promise<void> {

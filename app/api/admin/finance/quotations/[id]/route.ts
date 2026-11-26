@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 type RouteContext = {
   params: Promise<{
@@ -80,6 +81,7 @@ export async function POST(
         where: { id },
         select: {
           id: true,
+          quotationNumber: true,
           status: true,
         },
       });
@@ -217,6 +219,16 @@ export async function POST(
         409
       );
     }
+
+    await notifySuperAdmin({
+      eventType: "QUOTATION_UPDATED",
+      subject: "Draft service quotation updated",
+      details: {
+        Quotation: existingQuotation.quotationNumber,
+        Amount: `KES ${amount.toFixed(2)}`,
+        Administrator: session.email,
+      },
+    });
 
     // 10. Redirect to updated quotation.
     return NextResponse.redirect(

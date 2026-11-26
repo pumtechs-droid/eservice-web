@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 type StaffRouteContext = {
   params: Promise<{
@@ -309,6 +310,19 @@ export async function PATCH(
         isolationLevel: "Serializable",
       }
     );
+
+    await notifySuperAdmin({
+      eventType: "PERSONNEL_ACCOUNT_UPDATED",
+      subject: "Administrator personnel account updated",
+      details: {
+        Name: updatedPersonnel.fullName,
+        Email: updatedPersonnel.email,
+        Role: updatedPersonnel.role,
+        Active: updatedPersonnel.isActive,
+        "Fields changed": Object.keys(updateData).join(", "),
+        "Changed by": session.email,
+      },
+    });
 
     return respond(
       true,

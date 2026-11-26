@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
 import { createAdminSession } from "@/lib/auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
+import { createHash } from "node:crypto";
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,9 +43,26 @@ export async function POST(request: NextRequest) {
 
     const admin = await prisma.adminUser.findUnique({
       where: { email },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        passwordHash: true,
+        role: true,
+        isActive: true,
+      },
     });
 
     if (!admin || !admin.isActive) {
+      await notifySuperAdmin({
+        eventType: "ADMIN_LOGIN_FAILED",
+        subject: "Unsuccessful administrator sign-in",
+        details: { "Attempted email": email },
+        dedupeKey: `admin-login-failed:${createHash("sha256")
+          .update(email)
+          .digest("hex")}:${Math.floor(Date.now() / 900_000)}`,
+      });
+
       return NextResponse.json(
         {
           success: false,
@@ -59,6 +78,15 @@ export async function POST(request: NextRequest) {
     );
 
     if (!passwordMatches) {
+      await notifySuperAdmin({
+        eventType: "ADMIN_LOGIN_FAILED",
+        subject: "Unsuccessful administrator sign-in",
+        details: { "Attempted email": email },
+        dedupeKey: `admin-login-failed:${createHash("sha256")
+          .update(email)
+          .digest("hex")}:${Math.floor(Date.now() / 900_000)}`,
+      });
+
       return NextResponse.json(
         {
           success: false,
@@ -68,15 +96,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const updatedAdmin = await prisma.adminUser.update({
+      where: { id: admin.id },
+      data: { lastLoginAt: new Date() },
+      select: { updatedAt: true },
+    });
+
     await createAdminSession({
       id: admin.id,
       email: admin.email,
       role: admin.role,
+      accountUpdatedAt: updatedAdmin.updatedAt.getTime(),
     });
 
-    await prisma.adminUser.update({
-      where: { id: admin.id },
-      data: { lastLoginAt: new Date() },
+    await notifySuperAdmin({
+      eventType: "ADMIN_LOGIN_SUCCEEDED",
+      subject: "Administrator signed in",
+      details: {
+        Administrator: admin.fullName,
+        Email: admin.email,
+        Role: admin.role,
+      },
     });
 
     return NextResponse.json(

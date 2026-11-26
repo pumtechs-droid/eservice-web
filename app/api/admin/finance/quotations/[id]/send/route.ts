@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
 import { sendQuotationEmail } from "@/lib/email";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 type RouteContext = {
   params: Promise<{
@@ -155,6 +156,18 @@ export async function POST(
         "sendError"
       );
     }
+
+    await notifySuperAdmin({
+      eventType: "QUOTATION_SENT",
+      subject: "Service quotation sent to customer",
+      details: {
+        Quotation: quotation.quotationNumber,
+        Request: quotation.request.reference,
+        Customer: quotation.request.customer.fullName,
+        Amount: `${quotation.currency} ${Number(quotation.amount).toFixed(2)}`,
+        Administrator: admin.fullName,
+      },
+    });
 
     if (quotation.request.customer.email) {
       try {

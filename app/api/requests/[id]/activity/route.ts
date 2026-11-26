@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 const allowedStatuses = [
   "NEW",
@@ -154,7 +155,7 @@ export async function POST(
       const result = await prisma.$transaction(async (tx) => {
         const existing = await tx.serviceRequest.findUnique({
           where: { id },
-          select: { id: true, status: true },
+          select: { id: true, status: true, reference: true },
         });
 
         if (!existing) return { notFound: true as const };
@@ -184,6 +185,8 @@ export async function POST(
 
         return {
           updated: true as const,
+          reference: existing.reference,
+          fromStatus: existing.status,
           status: updated.status,
         };
       });
@@ -202,6 +205,17 @@ export async function POST(
           status: result.status,
         });
       }
+
+      await notifySuperAdmin({
+        eventType: "REQUEST_STATUS_CHANGED",
+        subject: "Service request status changed",
+        details: {
+          Reference: result.reference,
+          "Previous status": result.fromStatus,
+          "New status": result.status,
+          Administrator: admin.fullName,
+        },
+      });
 
       return NextResponse.json({
         success: true,
@@ -228,10 +242,10 @@ export async function POST(
       const result = await prisma.$transaction(async (tx) => {
         const existing = await tx.serviceRequest.findUnique({
           where: { id },
-          select: { id: true },
+          select: { id: true, reference: true },
         });
 
-        if (!existing) return false;
+        if (!existing) return null;
 
         await tx.requestActivity.create({
           data: {
@@ -242,7 +256,7 @@ export async function POST(
           },
         });
 
-        return true;
+        return existing.reference;
       });
 
       if (!result) {
@@ -251,6 +265,15 @@ export async function POST(
           { status: 404 }
         );
       }
+
+      await notifySuperAdmin({
+        eventType: "REQUEST_INTERNAL_NOTE_ADDED",
+        subject: "Internal note added to a service request",
+        details: {
+          Reference: result,
+          Administrator: admin.fullName,
+        },
+      });
 
       return NextResponse.json({
         success: true,

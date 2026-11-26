@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 function errorResponse(message: string, status: number) {
   return NextResponse.json(
@@ -152,6 +153,7 @@ export async function POST(request: Request) {
       },
       select: {
         id: true,
+        reference: true,
       },
     });
 
@@ -176,7 +178,7 @@ export async function POST(request: Request) {
       .toUpperCase()}`;
 
     // 10. Create the quotation as a draft.
-    await prisma.serviceQuotation.create({
+    const quotation = await prisma.serviceQuotation.create({
       data: {
         quotationNumber,
         requestId: serviceRequest.id,
@@ -188,9 +190,18 @@ export async function POST(request: Request) {
         status: "DRAFT",
         createdById: currentAdmin.id,
       },
-      select: {
-        id: true,
-        quotationNumber: true,
+      select: { id: true, quotationNumber: true },
+    });
+
+    await notifySuperAdmin({
+      eventType: "QUOTATION_CREATED",
+      subject: "Service quotation created",
+      details: {
+        Quotation: quotation.quotationNumber,
+        Request: serviceRequest.reference,
+        Amount: `KES ${amount.toFixed(2)}`,
+        Status: "DRAFT",
+        Administrator: currentAdmin.role,
       },
     });
 

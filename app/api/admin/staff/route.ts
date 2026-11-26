@@ -5,6 +5,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 const allowedRoles = ["ADMIN", "STAFF"] as const;
 
@@ -229,6 +230,17 @@ export async function POST(request: NextRequest) {
         role: true,
         isActive: true,
         createdAt: true,
+      },
+    });
+
+    await notifySuperAdmin({
+      eventType: "PERSONNEL_ACCOUNT_CREATED",
+      subject: "Administrator personnel account created",
+      details: {
+        Name: newAdmin.fullName,
+        Email: newAdmin.email,
+        Role: newAdmin.role,
+        "Created by": currentAdmin.role,
       },
     });
 

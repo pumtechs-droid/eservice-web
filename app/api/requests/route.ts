@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 // ==========================================
 // POST: SUBMIT A NEW SERVICE REQUEST
@@ -116,6 +117,17 @@ export async function POST(request: Request) {
         reference: true,
         status: true,
         createdAt: true,
+      },
+    });
+
+    await notifySuperAdmin({
+      eventType: "SERVICE_REQUEST_SUBMITTED",
+      subject: "New service request submitted",
+      details: {
+        Reference: serviceRequest.reference,
+        Customer: fullName,
+        Department: department,
+        Service: service,
       },
     });
 

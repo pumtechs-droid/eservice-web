@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
@@ -36,6 +37,16 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         publishedAt: status === "PUBLISHED" ? (existing.publishedAt ?? new Date()) : null,
       },
     });
+    await notifySuperAdmin({
+      eventType: "CMS_CONTENT_UPDATED",
+      subject: "CMS content updated",
+      details: {
+        Title: content.title,
+        Slug: content.slug,
+        Status: content.status,
+        Administrator: session.email,
+      },
+    });
     return NextResponse.json({ success: true, content });
   } catch (error) {
     console.error("CMS_UPDATE_ERROR:", error);
@@ -51,6 +62,26 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   if (!admin || !admin.isActive || admin.role !== "SUPER_ADMIN") {
     return NextResponse.json({ success: false, message: "Only a super administrator can delete content." }, { status: 403 });
   }
+  const content = await prisma.cmsContent.findUnique({
+    where: { id },
+    select: { title: true, slug: true },
+  });
+  if (!content) {
+    return NextResponse.json(
+      { success: false, message: "Content not found." },
+      { status: 404 }
+    );
+  }
+
   await prisma.cmsContent.delete({ where: { id } });
+  await notifySuperAdmin({
+    eventType: "CMS_CONTENT_DELETED",
+    subject: "CMS content deleted",
+    details: {
+      Title: content.title,
+      Slug: content.slug,
+      Administrator: session.email,
+    },
+  });
   return NextResponse.json({ success: true });
 }

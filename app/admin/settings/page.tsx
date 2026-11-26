@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
+import { SUPER_ADMIN_EMAIL } from "@/lib/email";
 
 export const instant = false;
 
@@ -13,9 +14,15 @@ export default async function AdminSettingsPage() {
   if (!admin || !admin.isActive) redirect("/admin/login");
   if (admin.role !== "SUPER_ADMIN" && admin.role !== "ADMIN") redirect("/admin/dashboard");
 
+  const mailConfigured = Boolean(
+    process.env.RESEND_API_KEY?.trim() &&
+      process.env.RESEND_FROM_EMAIL?.trim()
+  );
   const integrationStatus = [
     ["Database", Boolean(process.env.DATABASE_URL), "PostgreSQL"],
-    ["Transactional email", Boolean(process.env.RESEND_API_KEY), "Resend"],
+    ["Transactional email", mailConfigured, "Resend API key and verified sender"],
+    ["Super-admin alerts", mailConfigured, SUPER_ADMIN_EMAIL],
+    ["Notification retries", Boolean(process.env.CRON_SECRET), "Daily Vercel Cron"],
     ["M-Pesa", Boolean(process.env.MPESA_CONSUMER_KEY && process.env.MPESA_CONSUMER_SECRET && process.env.MPESA_SHORTCODE), "Daraja"],
   ];
 

@@ -130,6 +130,13 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
+          <Link
+            href="/admin/forgot-password"
+            className="admin-password-reset-link"
+          >
+            Forgot your password?
+          </Link>
+
           <div className="admin-login-security">
             <span>🛡️</span>
             <p>

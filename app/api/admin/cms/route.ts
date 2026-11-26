@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 async function authorized() {
   const session = await getAdminSession();
@@ -52,6 +53,16 @@ export async function POST(request: NextRequest) {
         publishedAt: status === "PUBLISHED" ? new Date() : null,
         authorId: admin.id,
         authorName: admin.fullName,
+      },
+    });
+    await notifySuperAdmin({
+      eventType: "CMS_CONTENT_CREATED",
+      subject: "CMS content created",
+      details: {
+        Title: content.title,
+        Slug: content.slug,
+        Status: content.status,
+        Author: admin.fullName,
       },
     });
     return NextResponse.json({ success: true, content }, { status: 201 });

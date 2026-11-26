@@ -55,20 +55,29 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum SystemNotificationStatus {
+  PENDING
+  PROCESSING
+  SENT
+}
+
 // ==========================================
 // ADMINISTRATOR ACCOUNTS
 // ==========================================
 
 model AdminUser {
-  id           String    @id @default(uuid())
-  fullName     String
-  email        String    @unique
-  passwordHash String
-  role         AdminRole @default(STAFF)
-  isActive     Boolean   @default(true)
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id                       String    @id @default(uuid())
+  fullName                 String
+  email                    String    @unique
+  passwordHash             String
+  role                     AdminRole @default(STAFF)
+  isActive                 Boolean   @default(true)
+  lastLoginAt              DateTime?
+  passwordResetTokenHash   String?   @unique
+  passwordResetExpiresAt   DateTime?
+  passwordResetRequestedAt DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   activities        RequestActivity[]
   quotationsCreated ServiceQuotation[]
@@ -245,4 +254,23 @@ model CmsContent {
 
   @@index([status, publishedAt])
   @@index([authorId])
+}
+
+model SystemNotification {
+  id          String                   @id @default(uuid())
+  eventType   String
+  subject     String
+  details     Json
+  dedupeKey   String?                  @unique
+  occurrences Int                      @default(1)
+  status      SystemNotificationStatus @default(PENDING)
+  attempts    Int                      @default(0)
+  availableAt DateTime                 @default(now())
+  lockedAt    DateTime?
+  sentAt      DateTime?
+  lastError   String?
+  createdAt   DateTime                 @default(now())
+
+  @@index([status, availableAt])
+  @@index([createdAt])
 }

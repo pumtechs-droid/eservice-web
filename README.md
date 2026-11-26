@@ -31,6 +31,19 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
+### Administrator email alerts and password recovery
+
+Configure these values in the deployment environment:
+
+- `RESEND_API_KEY`: Resend API key.
+- `RESEND_FROM_EMAIL`: verified sender address, for example `E-SERVICE HUB <notifications@your-verified-domain>`.
+- `CRON_SECRET`: long random secret used to authorize the notification retry job.
+- `APP_URL`: canonical site URL used to build administrator password-reset links. Production must use HTTPS.
+
+System-change and sign-in/security alerts are sent to `aylatechs.hub@gmail.com`. Failed sign-ins are grouped into a single alert per account per 15-minute window. Unsent alerts are retained and retried by the Vercel cron job daily (the Hobby-plan-compatible schedule).
+
+Apply migrations to the intended production database with `npx prisma migrate deploy` using the secure production environment. Never paste API keys or database URLs into chat or source control.
+
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

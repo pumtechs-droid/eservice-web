@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCustomerSession } from "@/lib/customer-auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 export async function POST(request: NextRequest) {
   const session = await getCustomerSession();
@@ -35,6 +36,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: false,
       message: "M-Pesa payments are not configured yet. Contact support or use the displayed payment instructions.",
+    }, { status: 503 });
+  }
+
+  const recorder = await prisma.adminUser.findFirst({
+    where: { isActive: true },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  if (!recorder) {
+    return NextResponse.json({
+      success: false,
+      message: "M-Pesa payments are temporarily unavailable.",
     }, { status: 503 });
   }
 
@@ -83,26 +96,32 @@ export async function POST(request: NextRequest) {
       throw new Error(result.ResponseDescription || "M-Pesa did not accept the payment request.");
     }
 
-    const recorder = await prisma.adminUser.findFirst({
-      where: { isActive: true },
-      orderBy: { createdAt: "asc" },
+    const payment = await prisma.payment.create({
+      data: {
+        receiptNumber: `ESH-MPESA-${result.CheckoutRequestID.slice(-10).toUpperCase()}`,
+        requestId: serviceRequest.id,
+        amount: Math.round(amount),
+        currency: "KES",
+        method: "MPESA",
+        status: "PENDING",
+        providerReference: result.CheckoutRequestID,
+        providerPayload: result,
+        recordedById: recorder.id,
+        notes: `M-Pesa phone: ${normalizedPhone}`,
+      },
     });
-    if (recorder) {
-      await prisma.payment.create({
-        data: {
-          receiptNumber: `ESH-MPESA-${result.CheckoutRequestID.slice(-10).toUpperCase()}`,
-          requestId: serviceRequest.id,
-          amount: Math.round(amount),
-          currency: "KES",
-          method: "MPESA",
-          status: "PENDING",
-          providerReference: result.CheckoutRequestID,
-          providerPayload: result,
-          recordedById: recorder.id,
-          notes: `M-Pesa phone: ${normalizedPhone}`,
-        },
-      });
-    }
+
+    await notifySuperAdmin({
+      eventType: "MPESA_PAYMENT_INITIATED",
+      subject: "M-Pesa payment prompt initiated",
+      details: {
+        Receipt: payment.receiptNumber,
+        Request: serviceRequest.reference,
+        Amount: `KES ${Number(payment.amount).toFixed(2)}`,
+        Customer: session.fullName,
+        Status: payment.status,
+      },
+    });
 
     return NextResponse.json({
       success: true,

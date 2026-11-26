@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 type RouteContext = {
   params: Promise<{
@@ -228,6 +229,16 @@ export async function PATCH(
         email: true,
         createdAt: true,
         updatedAt: true,
+      },
+    });
+
+    await notifySuperAdmin({
+      eventType: "CUSTOMER_CONTACT_UPDATED",
+      subject: "Customer contact information updated",
+      details: {
+        Customer: updatedCustomer.fullName,
+        Email: updatedCustomer.email ?? "Not provided",
+        "Changed by": currentAdmin.role,
       },
     });
 

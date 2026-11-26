@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 
 import { prisma } from "@/lib/prisma";
 import { getCustomerSession } from "@/lib/customer-auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 export async function POST(request: NextRequest) {
   const session = await getCustomerSession();
@@ -33,6 +34,7 @@ export async function POST(request: NextRequest) {
   const recorder = await prisma.adminUser.findFirst({
     where: { isActive: true },
     orderBy: { createdAt: "asc" },
+    select: { id: true },
   });
   if (!recorder) {
     return NextResponse.json({ success: false, message: "Payment intake is temporarily unavailable." }, { status: 503 });
@@ -49,6 +51,19 @@ export async function POST(request: NextRequest) {
       transactionReference: transactionReference || null,
       notes: "Submitted by customer for verification.",
       recordedById: recorder.id,
+    },
+  });
+
+  await notifySuperAdmin({
+    eventType: "MANUAL_PAYMENT_SUBMITTED",
+    subject: "Customer submitted a payment for verification",
+    details: {
+      Receipt: payment.receiptNumber,
+      Request: serviceRequest.reference,
+      Amount: `${payment.currency} ${Number(payment.amount).toFixed(2)}`,
+      Method: payment.method,
+      Status: payment.status,
+      Customer: session.fullName,
     },
   });
 

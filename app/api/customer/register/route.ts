@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { createCustomerSession } from "@/lib/customer-auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,11 @@ export async function POST(request: NextRequest) {
         data: { fullName, phone, passwordHash, isActive: true },
       });
       await createCustomerSession({ id: customer.id, email: customer.email!, fullName: customer.fullName });
+      await notifySuperAdmin({
+        eventType: "CUSTOMER_ACCOUNT_CREATED",
+        subject: "Customer portal account created",
+        details: { Customer: customer.fullName, Email: customer.email! },
+      });
       return NextResponse.json({ success: true, message: "Account created." });
     }
 
@@ -44,6 +50,11 @@ export async function POST(request: NextRequest) {
       data: { fullName, phone, email, passwordHash, isActive: true },
     });
     await createCustomerSession({ id: customer.id, email: customer.email!, fullName: customer.fullName });
+    await notifySuperAdmin({
+      eventType: "CUSTOMER_ACCOUNT_CREATED",
+      subject: "Customer portal account created",
+      details: { Customer: customer.fullName, Email: customer.email! },
+    });
     return NextResponse.json({ success: true, message: "Account created." }, { status: 201 });
   } catch (error) {
     console.error("CUSTOMER_REGISTER_ERROR:", error);

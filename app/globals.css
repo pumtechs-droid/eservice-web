@@ -2871,6 +2871,21 @@ a {
   cursor: not-allowed;
 }
 
+.admin-password-reset-link {
+  display: block;
+  width: fit-content;
+  margin: 16px auto 0;
+  color: #b8860b;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-password-reset-link:hover {
+  color: #061b42;
+  text-decoration: underline;
+}
+
 .admin-login-error {
   background: #fff0f0;
   border: 1px solid #ffcaca;
@@ -2879,6 +2894,22 @@ a {
   padding: 12px;
   font-size: 12px;
   margin-bottom: 15px;
+}
+
+.admin-login-success {
+  background: #eefaf2;
+  border: 1px solid #b7e4c7;
+  color: #176b3a;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.admin-login-success a {
+  color: #061b42;
+  font-weight: 700;
 }
 
 .admin-login-security {

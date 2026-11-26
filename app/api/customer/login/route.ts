@@ -1,8 +1,10 @@
 import bcrypt from "bcryptjs";
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { createCustomerSession } from "@/lib/customer-auth";
+import { notifySuperAdmin } from "@/lib/system-notifications";
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,6 +29,15 @@ export async function POST(request: NextRequest) {
       !customer.passwordHash ||
       !customer.isActive
     ) {
+      await notifySuperAdmin({
+        eventType: "CUSTOMER_LOGIN_FAILED",
+        subject: "Unsuccessful customer portal sign-in",
+        details: { "Attempted email": email },
+        dedupeKey: `customer-login-failed:${createHash("sha256")
+          .update(email)
+          .digest("hex")}:${Math.floor(Date.now() / 900_000)}`,
+      });
+
       return NextResponse.json(
         { success: false, message: "Invalid email or password." },
         { status: 401 }
@@ -35,6 +46,15 @@ export async function POST(request: NextRequest) {
 
     const matches = await bcrypt.compare(password, customer.passwordHash);
     if (!matches) {
+      await notifySuperAdmin({
+        eventType: "CUSTOMER_LOGIN_FAILED",
+        subject: "Unsuccessful customer portal sign-in",
+        details: { "Attempted email": email },
+        dedupeKey: `customer-login-failed:${createHash("sha256")
+          .update(email)
+          .digest("hex")}:${Math.floor(Date.now() / 900_000)}`,
+      });
+
       return NextResponse.json(
         { success: false, message: "Invalid email or password." },
         { status: 401 }
@@ -50,6 +70,12 @@ export async function POST(request: NextRequest) {
     await prisma.customer.update({
       where: { id: customer.id },
       data: { lastLoginAt: new Date() },
+    });
+
+    await notifySuperAdmin({
+      eventType: "CUSTOMER_LOGIN_SUCCEEDED",
+      subject: "Customer signed in to the portal",
+      details: { Customer: customer.fullName, Email: customer.email! },
     });
 
     return NextResponse.json(
