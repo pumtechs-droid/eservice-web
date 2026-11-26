@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import styles from "../portal.module.css";
+import { MPESA_TILL_NUMBER } from "@/lib/payment-config";
 
 type RequestOption = {
   id: string;
@@ -13,12 +14,14 @@ type RequestOption = {
   status: string;
 };
 
+type PaymentOption = "BANK_TRANSFER" | "MPESA_TILL" | "MPESA_STK";
+
 export default function CustomerPaymentsPage() {
   const router = useRouter();
   const [requests, setRequests] = useState<RequestOption[]>([]);
   const [requestId, setRequestId] = useState("");
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState("BANK_TRANSFER");
+  const [method, setMethod] = useState<PaymentOption>("BANK_TRANSFER");
   const [phone, setPhone] = useState("");
   const [reference, setReference] = useState("");
   const [message, setMessage] = useState("");
@@ -80,7 +83,7 @@ export default function CustomerPaymentsPage() {
 
     try {
       const endpoint =
-        method === "MPESA"
+        method === "MPESA_STK"
           ? "/api/payments/mpesa/initiate"
           : "/api/payments/manual";
       const response = await fetch(endpoint, {
@@ -90,7 +93,10 @@ export default function CustomerPaymentsPage() {
           requestId,
           amount,
           phone,
-          method,
+          method:
+            method === "MPESA_STK"
+              ? "MPESA"
+              : method,
           transactionReference: reference,
         }),
         signal: controller.signal,
@@ -184,10 +190,14 @@ export default function CustomerPaymentsPage() {
                 Payment method
                 <select
                   value={method}
-                  onChange={(event) => setMethod(event.target.value)}
+                  onChange={(event) => {
+                    setMethod(event.target.value as PaymentOption)
+                    setReference("");
+                  }}
                 >
                   <option value="BANK_TRANSFER">Bank transfer</option>
-                  <option value="MPESA">M-Pesa STK Push</option>
+                  <option value="MPESA_TILL">Lipa na M-Pesa Till</option>
+                  <option value="MPESA_STK">M-Pesa STK Push</option>
                 </select>
               </label>
 
@@ -203,7 +213,7 @@ export default function CustomerPaymentsPage() {
                 />
               </label>
 
-              {method === "MPESA" ? (
+              {method === "MPESA_STK" ? (
                 <label className={styles.field}>
                   M-Pesa phone number
                   <input
@@ -215,6 +225,27 @@ export default function CustomerPaymentsPage() {
                     required
                   />
                 </label>
+              ) : method === "MPESA_TILL" ? (
+                <>
+                  <div className={styles.notice}>
+                    <strong>Lipa na M-Pesa</strong>
+                    <p>
+                      Select Buy Goods and Services and enter Till number{" "}
+                      <strong>{MPESA_TILL_NUMBER}</strong>. Pay the amount above,
+                      then enter the confirmation code from M-Pesa.
+                    </p>
+                  </div>
+                  <label className={styles.field}>
+                    M-Pesa confirmation code
+                    <input
+                      value={reference}
+                      onChange={(event) => setReference(event.target.value.trim().toUpperCase())}
+                      placeholder="e.g. QHX7ABC123"
+                      maxLength={32}
+                      required
+                    />
+                  </label>
+                </>
               ) : (
                 <label className={styles.field}>
                   Bank or transaction reference
@@ -226,17 +257,23 @@ export default function CustomerPaymentsPage() {
                 </label>
               )}
 
-              <p className={styles.paymentFootnote}>
-                Bank transfers are submitted as pending until an administrator
-                confirms the payment.
-              </p>
+              {method !== "MPESA_STK" && (
+                <p className={styles.paymentFootnote}>
+                  Payments are submitted as pending until an administrator
+                  verifies the transaction.
+                </p>
+              )}
 
               <button
                 type="submit"
                 disabled={isSubmitting || !requestId}
                 className={styles.submitButton}
               >
-                {isSubmitting ? "Processing..." : "Continue"}
+                {isSubmitting
+                  ? "Processing..."
+                  : method === "MPESA_STK"
+                    ? "Send M-Pesa prompt"
+                    : "Submit payment for verification"}
                 {!isSubmitting && <span aria-hidden="true">→</span>}
               </button>
             </form>

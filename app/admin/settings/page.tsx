@@ -8,6 +8,7 @@ import {
   isTransactionalEmailConfigured,
   SUPER_ADMIN_EMAIL,
 } from "@/lib/email";
+import { MPESA_TILL_NUMBER } from "@/lib/payment-config";
 
 export const instant = false;
 
@@ -24,6 +25,7 @@ export default async function AdminSettingsPage() {
     ["Transactional email", mailConfigured, getTransactionalEmailProviderLabel()],
     ["Super-admin alerts", mailConfigured, SUPER_ADMIN_EMAIL],
     ["Notification retries", Boolean(process.env.CRON_SECRET), "Daily Vercel Cron"],
+    ["M-Pesa Till", true, `Till ${MPESA_TILL_NUMBER}`],
     ["M-Pesa", Boolean(process.env.MPESA_CONSUMER_KEY && process.env.MPESA_CONSUMER_SECRET && process.env.MPESA_SHORTCODE), "Daraja"],
   ];
 

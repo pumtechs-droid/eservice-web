@@ -45,6 +45,8 @@ Official support numbers for calls, SMS, and WhatsApp:
 - +254 751 113 277
 - +254 183 270 095
 
+Customer payments include manual **Lipa na M-Pesa (Buy Goods and Services)** to Till **1966638**. Customers submit the M-Pesa confirmation code for administrator verification; Daraja STK Push remains a separate integration requiring its own credentials.
+
 ### Administrator email alerts and password recovery
 
 Configure these values in the Vercel Production environment:
@@ -69,7 +71,7 @@ To enable the Gmail fallback:
 
 System-change and sign-in/security alerts are sent to `aylatechs.hub@gmail.com`. Failed sign-ins are grouped into a single alert per account per 15-minute window. Unsent alerts are retained and retried by the Vercel cron job daily (the Hobby-plan-compatible schedule).
 
-Apply migrations to the intended production database with `npx prisma migrate deploy` using the secure production environment. Never paste API keys, shared secrets, or database URLs into chat or source control.
+Vercel Production deployments apply pending SQL migrations with `prisma migrate deploy` before building the app, using the Production `DATABASE_URL`. Preview and local builds do not run migrations. For manual migration work, run `npx prisma migrate deploy --config prisma7.config.ts` only after verifying the configured database target. Never paste API keys, shared secrets, or database URLs into chat or source control.
 
 ### Mandatory password change and initial administrator access
 
@@ -78,9 +80,8 @@ All existing administrator and customer accounts are required to change their pa
 Before deploying the password-change update:
 
 1. In Vercel Production, privately set `INITIAL_ADMIN_PASSWORD` to a unique temporary password of at least 12 characters. Do not use `1234`. The bootstrap sign-in is limited to the super administrator email in `INITIAL_ADMIN_EMAIL` (defaults to `aylatechs.hub@gmail.com`) and only works while that account is required to change its password.
-2. Apply pending database migrations to the production database with `npx prisma migrate deploy`.
-3. Deploy the application. Sign in with the designated super administrator email and temporary password, then choose a new password.
-4. Remove `INITIAL_ADMIN_PASSWORD` from Vercel and redeploy. The bootstrap password is already disabled after the account's password change, but should not be retained as a deployment secret.
+2. Deploy the application. Its Production build applies pending migrations before the app build. Sign in with the designated super administrator email and temporary password, then choose a new password.
+3. Remove `INITIAL_ADMIN_PASSWORD` from Vercel and redeploy. The bootstrap password is already disabled after the account's password change, but should not be retained as a deployment secret.
 
 Staff accounts continue to use their assigned temporary credentials and are forced to choose a new password on first sign-in. Do not share temporary passwords through public channels.
 
