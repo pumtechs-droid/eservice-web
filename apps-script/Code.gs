@@ -3,6 +3,10 @@ const MAX_HTML_LENGTH = 50000;
 const MAX_SUBJECT_LENGTH = 200;
 const IDEMPOTENCY_CACHE_SECONDS = 21600;
 
+function authorizeEmailSending() {
+  MailApp.getRemainingDailyQuota();
+}
+
 function doPost(event) {
   const payload = parsePayload(event);
   if (!payload) {
