@@ -1,11 +1,11 @@
 .page {
   min-height: 100vh;
-  background: #f4f6fa;
-  color: #17243b;
+  background: var(--page-bg);
+  color: var(--text-primary);
 }
 
 .header {
-  background: #061b42;
+  background: var(--navy);
   color: #fff;
   box-shadow: 0 4px 18px rgba(3, 18, 47, 0.14);
 }
@@ -30,10 +30,10 @@
 .brandIcon {
   width: 42px;
   height: 42px;
-  border: 2px solid #f4bd32;
+  border: 2px solid var(--gold);
   border-radius: 12px;
-  background: #102e60;
-  color: #f4bd32;
+  background: var(--navy-light);
+  color: var(--gold);
   display: grid;
   place-items: center;
   font-size: 15px;
@@ -50,7 +50,7 @@
 
 .brandText small {
   display: block;
-  color: #f4bd32;
+  color: var(--gold);
   font-size: 9px;
   letter-spacing: 1.4px;
 }
@@ -68,7 +68,7 @@
 }
 
 .headerLink:hover {
-  color: #f4bd32;
+  color: var(--gold);
 }
 
 .headerButton {
@@ -85,8 +85,8 @@
 }
 
 .headerButton:hover {
-  border-color: #f4bd32;
-  color: #f4bd32;
+  border-color: var(--gold);
+  color: var(--gold);
 }
 
 .content {
@@ -96,7 +96,7 @@
 }
 
 .eyebrow {
-  color: #99700f;
+  color: var(--gold-ink);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.6px;
@@ -105,7 +105,7 @@
 
 .pageTitle {
   margin-top: 6px;
-  color: #061b42;
+  color: var(--navy);
   font-size: clamp(26px, 4vw, 34px);
   line-height: 1.2;
 }
@@ -149,10 +149,10 @@
   gap: 10px;
   margin-top: 28px;
   padding: 12px 15px;
-  border: 1px solid #e8d59f;
+  border: 1px solid var(--gold-border);
   border-radius: 10px;
-  background: #fffaf0;
-  color: #73550d;
+  background: var(--gold-surface);
+  color: var(--gold-ink);
   font-size: 11px;
   font-weight: 700;
 }
@@ -163,16 +163,16 @@
   height: 30px;
   place-items: center;
   border-radius: 8px;
-  background: #f4bd32;
-  color: #061b42;
+  background: var(--gold);
+  color: var(--navy);
   font-size: 14px;
 }
 
 .loginCard,
 .card {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 16px;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 12px 38px rgba(6, 27, 66, 0.08);
 }
 
@@ -182,14 +182,14 @@
 
 .cardHeading {
   margin: 0;
-  color: #061b42;
+  color: var(--navy);
   font-size: 21px;
   line-height: 1.35;
 }
 
 .cardDescription {
   margin-top: 5px;
-  color: #748198;
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -201,7 +201,7 @@
   margin-top: 23px;
   padding: 4px;
   border-radius: 9px;
-  background: #f0f3f8;
+  background: var(--surface-subtle);
 }
 
 .tab {
@@ -217,8 +217,8 @@
 }
 
 .tabActive {
-  background: #fff;
-  color: #061b42;
+  background: var(--surface);
+  color: var(--navy);
   box-shadow: 0 1px 5px rgba(6, 27, 66, 0.12);
 }
 
@@ -241,10 +241,10 @@
   width: 100%;
   min-height: 44px;
   padding: 0 12px;
-  border: 1px solid #d6deea;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
-  background: #fff;
-  color: #17243b;
+  background: var(--surface);
+  color: var(--text-primary);
   font: inherit;
   font-size: 13px;
 }
@@ -256,7 +256,7 @@
 
 .field input:focus,
 .field select:focus {
-  border-color: #c8941c;
+  border-color: var(--gold-ink);
   outline: 3px solid rgba(244, 189, 50, 0.18);
 }
 
@@ -274,9 +274,9 @@
   justify-content: center;
   gap: 10px;
   padding: 0 18px;
-  border: 1px solid #061b42;
+  border: 1px solid var(--navy);
   border-radius: 8px;
-  background: #061b42;
+  background: var(--navy);
   color: #fff;
   cursor: pointer;
   font: inherit;
@@ -337,7 +337,7 @@
   border-radius: 15px;
   background:
     radial-gradient(circle at 85% 10%, rgba(244, 189, 50, 0.15), transparent 28%),
-    #061b42;
+    var(--navy);
   color: #fff;
 }
 
@@ -362,22 +362,22 @@
 
 .statCard {
   padding: 19px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 5px 16px rgba(6, 27, 66, 0.035);
 }
 
 .statCard span {
   display: block;
-  color: #748198;
+  color: var(--text-muted);
   font-size: 11px;
 }
 
 .statCard strong {
   display: block;
   margin-top: 7px;
-  color: #061b42;
+  color: var(--navy);
   font-size: 26px;
   line-height: 1;
 }
@@ -392,13 +392,13 @@
 
 .sectionHeading h2 {
   margin-top: 4px;
-  color: #061b42;
+  color: var(--navy);
   font-size: 19px;
 }
 
 .sectionHeading p {
   margin-top: 4px;
-  color: #748198;
+  color: var(--text-muted);
   font-size: 11px;
 }
 
@@ -409,9 +409,9 @@
 
 .requestCard {
   padding: 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 5px 16px rgba(6, 27, 66, 0.035);
 }
 
@@ -432,13 +432,13 @@
 
 .requestCard h3 {
   margin-top: 5px;
-  color: #061b42;
+  color: var(--navy);
   font-size: 15px;
 }
 
 .requestDepartment {
   margin-top: 3px;
-  color: #748198;
+  color: var(--text-muted);
   font-size: 11px;
 }
 
@@ -483,7 +483,7 @@
 }
 
 .quote strong {
-  color: #061b42;
+  color: var(--navy);
 }
 
 .emptyState {
@@ -495,13 +495,13 @@
 }
 
 .emptyState h2 {
-  color: #061b42;
+  color: var(--navy);
   font-size: 17px;
 }
 
 .emptyState p {
   margin: 6px auto 16px;
-  color: #748198;
+  color: var(--text-muted);
   font-size: 11px;
 }
 
@@ -525,7 +525,7 @@
 }
 
 .paymentFootnote {
-  color: #748198;
+  color: var(--text-muted);
   font-size: 10px;
   line-height: 1.6;
 }

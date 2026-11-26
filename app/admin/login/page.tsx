@@ -59,21 +59,21 @@ export default function AdminLoginPage() {
           <span className="admin-brand-mark">ESH</span>
           <span>
             <strong>E-SERVICE HUB</strong>
-            <small>& DIGITAL CYBER</small>
+            <small>TEAM PORTAL</small>
           </span>
         </Link>
 
         <section className="admin-login-card">
           <div className="admin-login-icon">🔐</div>
           <p className="admin-login-eyebrow">
-            SECURE ADMINISTRATION PORTAL
+            SECURE STAFF & ADMIN PORTAL
           </p>
 
-          <h1>Administrator Sign In</h1>
+          <h1>Team Sign In</h1>
 
           <p className="admin-login-description">
-            Sign in using your authorised administrator credentials
-            to access the E-SERVICE HUB management environment.
+            Sign in using your authorised staff or administrator credentials
+            to access the E-SERVICE HUB workspace.
           </p>
 
           {errorMessage && (
@@ -89,7 +89,7 @@ export default function AdminLoginPage() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="Enter your administrator email"
+              placeholder="Enter your team email"
               autoComplete="username"
               maxLength={254}
               required

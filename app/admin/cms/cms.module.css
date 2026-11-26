@@ -9,7 +9,7 @@
   border-radius: 16px;
   background:
     radial-gradient(circle at 85% 10%, rgba(244, 189, 50, 0.15), transparent 28%),
-    #061b42;
+    var(--navy);
   color: #fff;
 }
 
@@ -28,14 +28,14 @@
 
 .welcomeEyebrow,
 .eyebrow {
-  color: #b08113;
+  color: var(--gold-ink);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.4px;
 }
 
 .welcomeEyebrow {
-  color: #f4bd32;
+  color: var(--gold);
 }
 
 .welcomeBadge {
@@ -55,8 +55,8 @@
   height: 36px;
   place-items: center;
   border-radius: 9px;
-  background: #f4bd32;
-  color: #061b42;
+  background: var(--gold);
+  color: var(--navy);
   font-size: 20px;
 }
 
@@ -90,9 +90,9 @@
 .panel {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 8px 26px rgba(6, 27, 66, 0.045);
 }
 
@@ -103,7 +103,7 @@
 
 .panelHeader h2 {
   margin-top: 5px;
-  color: #061b42;
+  color: var(--navy);
   font-size: 20px;
   line-height: 1.35;
 }
@@ -111,7 +111,7 @@
 .panelHeader > p,
 .libraryTitle p {
   margin-top: 5px;
-  color: #748198;
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -157,10 +157,10 @@
 .slugInput {
   width: 100%;
   min-width: 0;
-  border: 1px solid #d6deea;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
-  background: #fff;
-  color: #17243b;
+  background: var(--surface);
+  color: var(--text-primary);
   font: inherit;
   font-size: 13px;
 }
@@ -206,7 +206,7 @@
 .slugInput > span {
   flex: 0 0 auto;
   padding-left: 11px;
-  color: #748198;
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 500;
 }
@@ -251,9 +251,9 @@
   gap: 13px;
   min-height: 44px;
   padding: 0 18px;
-  border: 1px solid #061b42;
+  border: 1px solid var(--navy);
   border-radius: 8px;
-  background: #061b42;
+  background: var(--navy);
   color: #fff;
   cursor: pointer;
   font: inherit;
@@ -266,7 +266,7 @@
 
 .formFooter button:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: #102e60;
+  background: var(--navy-light);
 }
 
 .formFooter button:disabled {
@@ -345,7 +345,7 @@
 
 .itemHeading h3 {
   min-width: 0;
-  color: #061b42;
+  color: var(--navy);
   font-size: 14px;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -411,7 +411,7 @@
 }
 
 .itemFooter a:hover {
-  color: #061b42;
+  color: var(--navy);
   text-decoration: underline;
 }
 
@@ -435,14 +435,14 @@
 
 .emptyState h3 {
   margin-top: 14px;
-  color: #061b42;
+  color: var(--navy);
   font-size: 14px;
 }
 
 .emptyState p {
   max-width: 260px;
   margin-top: 5px;
-  color: #748198;
+  color: var(--text-muted);
   font-size: 11px;
   line-height: 1.6;
 }

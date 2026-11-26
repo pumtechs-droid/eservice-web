@@ -2,6 +2,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import {
+  createWhatsAppUrl,
+  OFFICIAL_CONTACTS,
+} from "@/lib/official-contacts";
 
 const departments = {
   "education-student-support": {
@@ -105,11 +109,13 @@ async function ServicePageContent({
 
   const department = departments[slug as DepartmentSlug];
 
-  const whatsappMessage = encodeURIComponent(
-    `Hello E-SERVICE HUB & DIGITAL CYBER. I would like to enquire about ${department.title}. Kindly assist me.`
-  );
+  const whatsappMessage =
+    `Hello E-SERVICE HUB & DIGITAL CYBER. I would like to enquire about ${department.title}. Kindly assist me.`;
 
-  const whatsappLink = `https://wa.me/254713019045?text=${whatsappMessage}`;
+  const whatsappLink = createWhatsAppUrl(
+    OFFICIAL_CONTACTS[0].number,
+    whatsappMessage
+  );
 
   return (
     <main className="service-page">
@@ -166,9 +172,8 @@ async function ServicePageContent({
 
         <div className="service-list">
           {department.services.map((service, index) => {
-            const message = encodeURIComponent(
-              `Hello E-SERVICE HUB & DIGITAL CYBER. I need assistance with: ${service}, under ${department.title}. Kindly guide me on the requirements and charges.`
-            );
+            const message =
+              `Hello E-SERVICE HUB & DIGITAL CYBER. I need assistance with: ${service}, under ${department.title}. Kindly guide me on the requirements and charges.`;
 
             return (
               <div className="service-list-item" key={service}>
@@ -181,7 +186,10 @@ async function ServicePageContent({
                 </span>
 
                 <a
-                  href={`https://wa.me/254713019045?text=${message}`}
+                  href={createWhatsAppUrl(
+                    OFFICIAL_CONTACTS[0].number,
+                    message
+                  )}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="service-item-link"

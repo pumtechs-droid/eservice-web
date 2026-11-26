@@ -4,6 +4,10 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
+import {
+  createWhatsAppUrl,
+  OFFICIAL_CONTACTS,
+} from "@/lib/official-contacts";
 
 type RequestStatus =
   | "NEW"
@@ -322,7 +326,10 @@ export default function TrackRequestPage() {
         </p>
 
         <a
-          href="https://wa.me/254713019045"
+          href={createWhatsAppUrl(
+            OFFICIAL_CONTACTS[0].number,
+            "Hello E-SERVICE HUB & DIGITAL CYBER. I need help with my service request."
+          )}
           target="_blank"
           rel="noopener noreferrer"
         >

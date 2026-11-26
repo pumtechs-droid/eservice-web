@@ -31,6 +31,20 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
+### Live portal access and official contacts
+
+- Public website: https://eservice-web.vercel.app/
+- Customer portal: https://eservice-web.vercel.app/customer/login
+- Staff and administrator sign-in: https://eservice-web.vercel.app/admin/login
+- CMS workspace: https://eservice-web.vercel.app/admin/cms (available to authorized administrators after sign-in)
+
+Staff members and administrators use the team sign-in page with their assigned credentials. Do not share administrator credentials with customers.
+
+Official support numbers for calls, SMS, and WhatsApp:
+
+- +254 751 113 277
+- +254 183 270 095
+
 ### Administrator email alerts and password recovery
 
 Configure these values in the Vercel Production environment:

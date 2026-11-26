@@ -1,5 +1,9 @@
 
 import Link from "next/link";
+import {
+  createWhatsAppUrl,
+  OFFICIAL_CONTACTS,
+} from "@/lib/official-contacts";
 
 const departments = [
   {
@@ -152,18 +156,17 @@ const steps = [
   },
 ];
 
-const whatsappLink =
-  "https://wa.me/254713019045?text=" +
-  encodeURIComponent(
-    "Hello E-SERVICE HUB & DIGITAL CYBER. I would like to enquire about your services. Kindly assist me."
-  );
+const primaryContact = OFFICIAL_CONTACTS[0];
+const whatsappLink = createWhatsAppUrl(
+  primaryContact.number,
+  "Hello E-SERVICE HUB & DIGITAL CYBER. I would like to enquire about your services. Kindly assist me."
+);
 
 function getDepartmentWhatsAppLink(title: string) {
-  const message = encodeURIComponent(
-    `Hello E-SERVICE HUB & DIGITAL CYBER. I would like to enquire about ${title}. Kindly assist me with the available services, requirements and charges.`
-  );
+  const message =
+    `Hello E-SERVICE HUB & DIGITAL CYBER. I would like to enquire about ${title}. Kindly assist me with the available services, requirements and charges.`;
 
-  return `https://wa.me/254713019045?text=${message}`;
+  return createWhatsAppUrl(primaryContact.number, message);
 }
 
 export default function Home() {
@@ -498,15 +501,17 @@ export default function Home() {
             Chat on WhatsApp <span>↗</span>
           </a>
 
-          <a href="tel:+254713019045" className="secondary-button">
+          <a href={`tel:${primaryContact.number}`} className="secondary-button">
             Call Our Team
           </a>
         </div>
 
         <div className="contact-details">
-          <a href="tel:+254713019045">+254 713 019 045</a>
-          <a href="tel:+254751113277">+254 751 113 277</a>
-          <a href="tel:0183270095">0183270095</a>
+          {OFFICIAL_CONTACTS.map((contact) => (
+            <a href={`tel:${contact.number}`} key={contact.number}>
+              {contact.display}
+            </a>
+          ))}
         </div>
       </section>
 
@@ -546,16 +551,6 @@ export default function Home() {
         </a>
       </footer>
 
-      {/* FLOATING WHATSAPP BUTTON */}
-      <a
-        className="whatsapp-float"
-        href={whatsappLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Contact E-SERVICE HUB on WhatsApp"
-      >
-        WhatsApp ↗
-      </a>
     </main>
   );
 }

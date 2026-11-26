@@ -1,5 +1,6 @@
 
 import type { Metadata, Viewport } from "next";
+import ContactDock from "./components/contact-dock";
 import ServiceWorkerRegister from "./components/service-worker-register";
 import "./globals.css";
 
@@ -46,6 +47,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
         {children}
+        <ContactDock />
       </body>
     </html>
   );
