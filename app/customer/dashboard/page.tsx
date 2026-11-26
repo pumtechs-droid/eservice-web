@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import styles from "../portal.module.css";
 import { prisma } from "@/lib/prisma";
 import { getCustomerSession } from "@/lib/customer-auth";
 
@@ -24,36 +25,142 @@ export default async function CustomerDashboardPage() {
   });
   if (!customer || !customer.isActive) redirect("/customer/login");
 
+  const activeRequests = customer.requests.filter(
+    (request) => !["COMPLETED", "CANCELLED"].includes(request.status)
+  ).length;
+  const confirmedPayments = customer.requests
+    .flatMap((request) => request.payments)
+    .filter((payment) => payment.status === "CONFIRMED").length;
+
   return (
-    <main className="min-h-screen bg-[#f5f7fb]">
-      <header className="bg-[#061B42] px-6 py-5 text-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <Link href="/" className="font-bold">E-SERVICE HUB <span className="text-[#F4BD32]">&amp; DIGITAL CYBER</span></Link>
-          <form action="/api/customer/logout" method="POST"><button className="rounded-lg border border-white/30 px-4 py-2 text-sm">Sign Out</button></form>
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <Link href="/" className={styles.brand}>
+            <span className={styles.brandIcon}>ESH</span>
+            <span className={styles.brandText}>
+              E-SERVICE HUB
+              <small>&amp; DIGITAL CYBER</small>
+            </span>
+          </Link>
+          <div className={styles.headerActions}>
+            <Link href="/customer/payments" className={styles.headerLink}>
+              Payments
+            </Link>
+            <form action="/api/customer/logout" method="POST">
+              <button type="submit" className={styles.headerButton}>
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       </header>
-      <div className="mx-auto max-w-6xl px-5 py-10">
-        <p className="text-sm font-bold tracking-widest text-[#9A7414]">CUSTOMER PORTAL</p>
-        <h1 className="mt-2 text-3xl font-bold text-[#061B42]">Welcome, {customer.fullName}</h1>
-        <Link href="/customer/payments" className="mt-5 inline-block rounded-lg bg-[#061B42] px-5 py-3 text-sm font-bold text-white">Make a Payment</Link>
-        <section className="mt-8 grid gap-5 md:grid-cols-3">
-          <article className="rounded-xl border bg-white p-5"><span className="text-sm text-slate-500">Total requests</span><strong className="mt-2 block text-3xl text-[#061B42]">{customer.requests.length}</strong></article>
-          <article className="rounded-xl border bg-white p-5"><span className="text-sm text-slate-500">Active requests</span><strong className="mt-2 block text-3xl text-[#061B42]">{customer.requests.filter((request) => !["COMPLETED", "CANCELLED"].includes(request.status)).length}</strong></article>
-          <article className="rounded-xl border bg-white p-5"><span className="text-sm text-slate-500">Confirmed payments</span><strong className="mt-2 block text-3xl text-[#061B42]">{customer.requests.flatMap((request) => request.payments).filter((payment) => payment.status === "CONFIRMED").length}</strong></article>
+
+      <div className={styles.content}>
+        <section className={styles.welcome}>
+          <div>
+            <p className={styles.eyebrow}>CUSTOMER PORTAL</p>
+            <h1>Welcome back, {customer.fullName}</h1>
+            <p>Here is the latest activity on your service requests.</p>
+          </div>
+          <Link href="/request-service" className={styles.primaryLink}>
+            New service request <span aria-hidden="true">→</span>
+          </Link>
         </section>
-        <section className="mt-8 space-y-4">
-          {customer.requests.length === 0 && (
-            <div className="rounded-xl border bg-white p-8 text-center"><h2 className="text-xl font-bold text-[#061B42]">No service requests yet</h2><Link href="/request-service" className="mt-5 inline-block rounded-lg bg-[#061B42] px-5 py-3 font-bold text-white">Submit a Request</Link></div>
+
+        <section className={styles.statGrid} aria-label="Account overview">
+          <article className={styles.statCard}>
+            <span>Total requests</span>
+            <strong>{customer.requests.length}</strong>
+          </article>
+          <article className={styles.statCard}>
+            <span>Active requests</span>
+            <strong>{activeRequests}</strong>
+          </article>
+          <article className={styles.statCard}>
+            <span>Confirmed payments</span>
+            <strong>{confirmedPayments}</strong>
+          </article>
+        </section>
+
+        <section>
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className={styles.eyebrow}>YOUR ACTIVITY</p>
+              <h2>Service requests</h2>
+              <p>Track progress, quotations and payment status.</p>
+            </div>
+          </div>
+
+          {customer.requests.length > 0 ? (
+            <div className={styles.requestList}>
+              {customer.requests.map((request) => (
+                <article key={request.id} className={styles.requestCard}>
+                  <div className={styles.requestTop}>
+                    <div>
+                      <p className={styles.requestReference}>{request.reference}</p>
+                      <h3>{request.service}</h3>
+                      <p className={styles.requestDepartment}>{request.department}</p>
+                    </div>
+                    <span className={styles.status}>
+                      {request.status.replaceAll("_", " ")}
+                    </span>
+                  </div>
+
+                  {(request.quotations.length > 0 ||
+                    request.payments.length > 0) && (
+                    <div className={styles.quoteList}>
+                      {request.quotations.slice(0, 1).map((quotation) => (
+                        <div key={quotation.id} className={styles.quote}>
+                          <span>
+                            Quotation <strong>{quotation.quotationNumber}</strong>
+                          </span>
+                          <span>
+                            <strong>
+                              {quotation.currency}{" "}
+                              {Number(quotation.amount).toLocaleString("en-KE", {
+                                minimumFractionDigits: 2,
+                              })}
+                            </strong>{" "}
+                            · {quotation.status.toLowerCase()}
+                          </span>
+                        </div>
+                      ))}
+                      {request.payments.slice(0, 1).map((payment) => (
+                        <div key={payment.id} className={styles.quote}>
+                          <span>Payment {payment.receiptNumber}</span>
+                          <span>
+                            {payment.currency}{" "}
+                            {Number(payment.amount).toLocaleString("en-KE", {
+                              minimumFractionDigits: 2,
+                            })}{" "}
+                            · {payment.status.toLowerCase()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className={styles.requestMeta}>
+                    <span>Request updated {request.updatedAt.toLocaleDateString("en-KE")}</span>
+                    {request.payments.some((payment) => payment.status === "PENDING") && (
+                      <Link href="/customer/payments" className={styles.headerLink}>
+                        Review payment status →
+                      </Link>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.emptyState}>
+              <h2>No service requests yet</h2>
+              <p>Your requests and their updates will appear here.</p>
+              <Link href="/request-service" className={styles.primaryLink}>
+                Submit a service request →
+              </Link>
+            </div>
           )}
-          {customer.requests.map((request) => (
-            <article key={request.id} className="rounded-xl border bg-white p-6">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div><p className="text-xs font-bold text-slate-500">{request.reference}</p><h2 className="mt-1 text-xl font-bold text-[#061B42]">{request.service}</h2><p className="text-sm text-slate-600">{request.department}</p></div>
-                <span className="rounded-full bg-[#FFF7D6] px-3 py-1 text-xs font-bold text-[#806000]">{request.status.replaceAll("_", " ")}</span>
-              </div>
-              {request.quotations.length > 0 && <div className="mt-5 border-t pt-4"><strong className="text-sm">Latest quotation</strong>{request.quotations.slice(0, 1).map((quotation) => <p key={quotation.id} className="mt-1 text-sm text-slate-600">{quotation.quotationNumber} — {quotation.currency} {Number(quotation.amount).toLocaleString()} · {quotation.status}</p>)}</div>}
-            </article>
-          ))}
         </section>
       </div>
     </main>

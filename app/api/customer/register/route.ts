@@ -47,6 +47,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, message: "Account created." }, { status: 201 });
   } catch (error) {
     console.error("CUSTOMER_REGISTER_ERROR:", error);
-    return NextResponse.json({ success: false, message: "Unable to create the account." }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Customer registration is temporarily unavailable. Please try again shortly.",
+      },
+      {
+        status: 503,
+        headers: { "Cache-Control": "no-store" },
+      }
+    );
   }
 }

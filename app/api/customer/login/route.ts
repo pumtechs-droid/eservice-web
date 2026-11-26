@@ -59,8 +59,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("CUSTOMER_LOGIN_ERROR:", error);
     return NextResponse.json(
-      { success: false, message: "Unable to sign in." },
-      { status: 500 }
+      {
+        success: false,
+        message: "Customer sign-in is temporarily unavailable. Please try again shortly.",
+      },
+      {
+        status: 503,
+        headers: { "Cache-Control": "no-store" },
+      }
     );
   }
 }
