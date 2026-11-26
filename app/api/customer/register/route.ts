@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { createCustomerSession } from "@/lib/customer-auth";
+import { createCustomerPasswordChangeSession } from "@/lib/customer-auth";
 import { notifySuperAdmin } from "@/lib/system-notifications";
 
 export async function POST(request: NextRequest) {
@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
       return NextResponse.json({ success: false, message: "Enter a valid email address." }, { status: 400 });
     }
-    if (password.length < 10 || password.length > 128) {
-      return NextResponse.json({ success: false, message: "Password must contain at least 10 characters." }, { status: 400 });
+    if (password.length < 8 || password.length > 128) {
+      return NextResponse.json({ success: false, message: "Password must contain between 8 and 128 characters." }, { status: 400 });
     }
 
     const existing = await prisma.customer.findUnique({ where: { email } });
@@ -34,28 +34,62 @@ export async function POST(request: NextRequest) {
       const passwordHash = await bcrypt.hash(password, 12);
       const customer = await prisma.customer.update({
         where: { id: existing.id },
-        data: { fullName, phone, passwordHash, isActive: true },
+        data: {
+          fullName,
+          phone,
+          passwordHash,
+          isActive: true,
+          passwordChangeRequired: true,
+        },
       });
-      await createCustomerSession({ id: customer.id, email: customer.email!, fullName: customer.fullName });
+      await createCustomerPasswordChangeSession({
+        id: customer.id,
+        email: customer.email!,
+        fullName: customer.fullName,
+        accountUpdatedAt: customer.updatedAt.getTime(),
+      });
       await notifySuperAdmin({
         eventType: "CUSTOMER_ACCOUNT_CREATED",
         subject: "Customer portal account created",
         details: { Customer: customer.fullName, Email: customer.email! },
       });
-      return NextResponse.json({ success: true, message: "Account created." });
+      return NextResponse.json({
+        success: true,
+        message: "Account created.",
+        mustChangePassword: true,
+      });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
     const customer = await prisma.customer.create({
-      data: { fullName, phone, email, passwordHash, isActive: true },
+      data: {
+        fullName,
+        phone,
+        email,
+        passwordHash,
+        isActive: true,
+        passwordChangeRequired: true,
+      },
     });
-    await createCustomerSession({ id: customer.id, email: customer.email!, fullName: customer.fullName });
+    await createCustomerPasswordChangeSession({
+      id: customer.id,
+      email: customer.email!,
+      fullName: customer.fullName,
+      accountUpdatedAt: customer.updatedAt.getTime(),
+    });
     await notifySuperAdmin({
       eventType: "CUSTOMER_ACCOUNT_CREATED",
       subject: "Customer portal account created",
       details: { Customer: customer.fullName, Email: customer.email! },
     });
-    return NextResponse.json({ success: true, message: "Account created." }, { status: 201 });
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Account created.",
+        mustChangePassword: true,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("CUSTOMER_REGISTER_ERROR:", error);
     return NextResponse.json(

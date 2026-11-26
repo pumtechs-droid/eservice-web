@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       },
       data: {
         passwordHash,
+        passwordChangeRequired: false,
         passwordResetTokenHash: null,
         passwordResetExpiresAt: null,
       },

@@ -31,7 +31,11 @@ export default function CustomerLoginPage() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Unable to continue.");
-      router.push("/customer/dashboard");
+      router.replace(
+        result.mustChangePassword
+          ? "/customer/change-password"
+          : "/customer/dashboard"
+      );
       router.refresh();
     } catch (error) {
       setMessage(
@@ -158,14 +162,14 @@ export default function CustomerLoginPage() {
               <input
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
                 type="password"
-                minLength={10}
+                minLength={mode === "register" ? 8 : undefined}
                 maxLength={128}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
               />
               {mode === "register" && (
-                <small className={styles.passwordHint}>Use at least 10 characters.</small>
+                <small className={styles.passwordHint}>Use at least 8 characters.</small>
               )}
             </label>
 

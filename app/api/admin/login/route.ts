@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
-import { createAdminSession } from "@/lib/auth";
+import {
+  createAdminPasswordChangeSession,
+  createAdminSession,
+  matchesInitialAdminPassword,
+} from "@/lib/auth";
 import { notifySuperAdmin } from "@/lib/system-notifications";
 import { createHash } from "node:crypto";
 
@@ -50,6 +54,7 @@ export async function POST(request: NextRequest) {
         passwordHash: true,
         role: true,
         isActive: true,
+        passwordChangeRequired: true,
       },
     });
 
@@ -77,7 +82,11 @@ export async function POST(request: NextRequest) {
       admin.passwordHash
     );
 
-    if (!passwordMatches) {
+    const bootstrapPasswordMatches =
+      admin.passwordChangeRequired &&
+      matchesInitialAdminPassword(password, admin.email, admin.role);
+
+    if (!passwordMatches && !bootstrapPasswordMatches) {
       await notifySuperAdmin({
         eventType: "ADMIN_LOGIN_FAILED",
         subject: "Unsuccessful administrator sign-in",
@@ -102,12 +111,18 @@ export async function POST(request: NextRequest) {
       select: { updatedAt: true },
     });
 
-    await createAdminSession({
+    const session = {
       id: admin.id,
       email: admin.email,
       role: admin.role,
       accountUpdatedAt: updatedAdmin.updatedAt.getTime(),
-    });
+    } as const;
+
+    if (admin.passwordChangeRequired) {
+      await createAdminPasswordChangeSession(session);
+    } else {
+      await createAdminSession(session);
+    }
 
     await notifySuperAdmin({
       eventType: "ADMIN_LOGIN_SUCCEEDED",
@@ -123,6 +138,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: "Login successful.",
+        mustChangePassword: admin.passwordChangeRequired,
         admin: {
           id: admin.id,
           fullName: admin.fullName,

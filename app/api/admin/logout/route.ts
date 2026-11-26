@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
+  clearAdminPasswordChangeSession,
   clearAdminSession,
   getAdminSession,
   type AdminSession,
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
   }
 
   await clearAdminSession();
+  await clearAdminPasswordChangeSession();
 
   if (session) {
     await notifySuperAdmin({

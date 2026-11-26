@@ -71,6 +71,19 @@ System-change and sign-in/security alerts are sent to `aylatechs.hub@gmail.com`.
 
 Apply migrations to the intended production database with `npx prisma migrate deploy` using the secure production environment. Never paste API keys, shared secrets, or database URLs into chat or source control.
 
+### Mandatory password change and initial administrator access
+
+All existing administrator and customer accounts are required to change their password at their next sign-in. New accounts are also required to change their password before accessing a portal. The new password must be between 8 and 128 characters; protected pages and APIs remain unavailable until the change is complete.
+
+Before deploying the password-change update:
+
+1. In Vercel Production, privately set `INITIAL_ADMIN_PASSWORD` to a unique temporary password of at least 12 characters. Do not use `1234`. The bootstrap sign-in is limited to the super administrator email in `INITIAL_ADMIN_EMAIL` (defaults to `aylatechs.hub@gmail.com`) and only works while that account is required to change its password.
+2. Apply pending database migrations to the production database with `npx prisma migrate deploy`.
+3. Deploy the application. Sign in with the designated super administrator email and temporary password, then choose a new password.
+4. Remove `INITIAL_ADMIN_PASSWORD` from Vercel and redeploy. The bootstrap password is already disabled after the account's password change, but should not be retained as a deployment secret.
+
+Staff accounts continue to use their assigned temporary credentials and are forced to choose a new password on first sign-in. Do not share temporary passwords through public channels.
+
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

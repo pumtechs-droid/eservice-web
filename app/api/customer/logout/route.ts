@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  clearCustomerPasswordChangeSession,
   clearCustomerSession,
   getCustomerSession,
 } from "@/lib/customer-auth";
@@ -8,6 +9,7 @@ import { notifySuperAdmin } from "@/lib/system-notifications";
 export async function POST(request: Request) {
   const session = await getCustomerSession();
   await clearCustomerSession();
+  await clearCustomerPasswordChangeSession();
   if (session) {
     await notifySuperAdmin({
       eventType: "CUSTOMER_LOGOUT",

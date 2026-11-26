@@ -39,7 +39,11 @@ export default function AdminLoginPage() {
       }
 
       setPassword("");
-      router.push("/admin/dashboard");
+      router.replace(
+        result.mustChangePassword
+          ? "/admin/change-password"
+          : "/admin/dashboard"
+      );
       router.refresh();
     } catch (error) {
       setErrorMessage(

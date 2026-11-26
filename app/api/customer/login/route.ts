@@ -3,7 +3,10 @@ import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { createCustomerSession } from "@/lib/customer-auth";
+import {
+  createCustomerPasswordChangeSession,
+  createCustomerSession,
+} from "@/lib/customer-auth";
 import { notifySuperAdmin } from "@/lib/system-notifications";
 
 export async function POST(request: NextRequest) {
@@ -61,16 +64,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await createCustomerSession({
+    const updatedCustomer = await prisma.customer.update({
+      where: { id: customer.id },
+      data: { lastLoginAt: new Date() },
+      select: { updatedAt: true },
+    });
+
+    const session = {
       id: customer.id,
       email: customer.email!,
       fullName: customer.fullName,
-    });
+      accountUpdatedAt: updatedCustomer.updatedAt.getTime(),
+    };
 
-    await prisma.customer.update({
-      where: { id: customer.id },
-      data: { lastLoginAt: new Date() },
-    });
+    if (customer.passwordChangeRequired) {
+      await createCustomerPasswordChangeSession(session);
+    } else {
+      await createCustomerSession(session);
+    }
 
     await notifySuperAdmin({
       eventType: "CUSTOMER_LOGIN_SUCCEEDED",
@@ -79,7 +90,11 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { success: true, message: "Signed in successfully." },
+      {
+        success: true,
+        message: "Signed in successfully.",
+        mustChangePassword: customer.passwordChangeRequired,
+      },
       { status: 200, headers: { "Cache-Control": "no-store" } }
     );
   } catch (error) {
