@@ -1,12 +1,19 @@
 
-const CACHE_NAME = "eservice-hub-v1";
+const CACHE_NAME = "eservice-hub-v2";
 const OFFLINE_URL = "/offline";
+const BRAND_ASSETS = [
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/icon-maskable-512.png",
+  "/icons/brand-badge.png",
+  "/icons/badge-72.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.add(OFFLINE_URL);
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll([OFFLINE_URL, ...BRAND_ASSETS])
+    )
   );
 
   self.skipWaiting();

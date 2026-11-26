@@ -1,15 +1,19 @@
 
 "use client";
 
+import Image from "next/image";
+
 export default function OfflinePage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#061B42] px-6 py-12">
       <section className="w-full max-w-md rounded-2xl border border-[#F4BD32]/30 bg-white p-8 text-center shadow-2xl">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#F4BD32] bg-[#061B42]">
-          <span className="text-4xl font-bold text-[#F4BD32]">
-            E
-          </span>
-        </div>
+        <Image
+          src="/icons/brand-badge.png"
+          alt="E-SERVICE HUB & DIGITAL CYBER"
+          width={112}
+          height={112}
+          className="mx-auto mb-6 rounded-full"
+        />
 
         <h1 className="text-2xl font-bold text-[#061B42]">
           You are Offline

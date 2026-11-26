@@ -11,6 +11,15 @@ export const metadata: Metadata = {
   description:
     "Your Premier One-Stop Digital Administrative & Student Support Center. Fast, reliable and affordable digital services, web development, data analytics and digital innovation.",
   applicationName: "E-SERVICE HUB",
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
