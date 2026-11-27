@@ -1,8 +1,34 @@
-
 import { NextResponse } from "next/server";
-import { randomUUID } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { notifySuperAdmin } from "@/lib/system-notifications";
+
+// ==========================================
+// GENERATE A UNIQUE SERVICE REQUEST REFERENCE
+// New format: ESH-XXXXXXX
+// ==========================================
+
+async function generateRequestReference() {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const suffix = randomBytes(4)
+      .toString("hex")
+      .toUpperCase()
+      .slice(0, 7);
+
+    const reference = `ESH-${suffix}`;
+
+    const existingRequest = await prisma.serviceRequest.findUnique({
+      where: { reference },
+      select: { id: true },
+    });
+
+    if (!existingRequest) {
+      return reference;
+    }
+  }
+
+  throw new Error("Unable to generate a unique service request reference.");
+}
 
 // ==========================================
 // POST: SUBMIT A NEW SERVICE REQUEST
@@ -80,10 +106,7 @@ export async function POST(request: Request) {
     }
 
     // Validate optional email
-    if (
-      email &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    ) {
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json(
         {
           success: false,
@@ -93,8 +116,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate unique service request reference
-    const reference = `ESH-${randomUUID().toUpperCase()}`;
+    // Generate a short unique reference for the new request
+    const reference = await generateRequestReference();
 
     // Save customer and request together
     const serviceRequest = await prisma.serviceRequest.create({
@@ -182,11 +205,16 @@ export async function GET(request: Request) {
       );
     }
 
-    // Validate ESH reference format
-    const referencePattern =
+    // Accept both the new short format and existing UUID references
+    const shortReferencePattern = /^ESH-[0-9A-F]{7}$/;
+
+    const legacyReferencePattern =
       /^ESH-[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
 
-    if (!referencePattern.test(reference)) {
+    if (
+      !shortReferencePattern.test(reference) &&
+      !legacyReferencePattern.test(reference)
+    ) {
       return NextResponse.json(
         {
           success: false,

@@ -88,10 +88,11 @@ export default function TrackRequestPage() {
     setTrackedRequest(null);
     setErrorMessage("");
 
-    if (!/^ESH-[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(cleanReference)) {
-      setErrorMessage(
-        "Please enter a valid ESH reference number."
-      );
+      if (
+      !/^ESH-[0-9A-F]{7}$/.test(cleanReference) &&
+      !/^ESH-[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(cleanReference)
+    ) {
+      setErrorMessage("Please enter a valid ESH reference number.");
       return;
     }
 
@@ -179,7 +180,7 @@ export default function TrackRequestPage() {
             <input
               id="request-reference"
               type="text"
-              placeholder="ESH-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+placeholder="ESH-XXXXXXX"
               value={reference}
               onChange={(event) => setReference(event.target.value)}
               autoComplete="off"
