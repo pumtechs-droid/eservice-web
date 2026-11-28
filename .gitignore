@@ -45,3 +45,6 @@ next-env.d.ts
 # Duplicate AI editor skill configurations
 .claude/
 .windsurf/
+
+# Local HR API backup
+app/api/admin/hr/employees/route.ts.backup-before-email
