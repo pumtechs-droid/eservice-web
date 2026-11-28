@@ -1,4 +1,4 @@
-import "server-only";
+﻿import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { sendAdminNotificationEmail } from "@/lib/email";
@@ -29,6 +29,7 @@ type AdminSystemEventType =
   | "MPESA_PAYMENT_FAILED"
   | "PERSONNEL_ACCOUNT_CREATED"
   | "PERSONNEL_ACCOUNT_UPDATED"
+  | "EMPLOYEE_REGISTERED"
   | "QUOTATION_CREATED"
   | "QUOTATION_UPDATED"
   | "QUOTATION_SENT"
@@ -235,3 +236,4 @@ export async function retryPendingAdminNotifications() {
 
   return processed;
 }
+

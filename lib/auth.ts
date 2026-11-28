@@ -21,7 +21,13 @@ if (!secret || secret.length < 64) {
 
 const secretKey = new TextEncoder().encode(secret);
 
-export type AdminRole = "SUPER_ADMIN" | "ADMIN" | "STAFF";
+export type AdminRole =
+  | "SUPER_ADMIN"
+  | "ADMIN"
+  | "MANAGER"
+  | "SUPERVISOR"
+  | "ACCOUNTANT"
+  | "STAFF";
 
 export type AdminSession = {
   id: string;
@@ -134,11 +140,14 @@ export async function getAdminSession(): Promise<AdminSession | null> {
     return null;
   }
 
-  const validRoles: AdminRole[] = [
-    "SUPER_ADMIN",
-    "ADMIN",
-    "STAFF",
-  ];
+ const validRoles: AdminRole[] = [
+  "SUPER_ADMIN",
+  "ADMIN",
+  "MANAGER",
+  "SUPERVISOR",
+  "ACCOUNTANT",
+  "STAFF",
+];
 
   if (
     typeof payload.sub !== "string" ||
@@ -196,7 +205,14 @@ export async function getAdminPasswordChangeSession(): Promise<AdminSession | nu
     return null;
   }
 
-  const validRoles: AdminRole[] = ["SUPER_ADMIN", "ADMIN", "STAFF"];
+  const validRoles: AdminRole[] = [
+  "SUPER_ADMIN",
+  "ADMIN",
+  "MANAGER",
+  "SUPERVISOR",
+  "ACCOUNTANT",
+  "STAFF",
+];
   if (
     typeof payload.sub !== "string" ||
     typeof payload.email !== "string" ||

@@ -1,7 +1,8 @@
-import "server-only";
+﻿import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 export const SUPER_ADMIN_EMAIL = "aylatechs.hub@gmail.com";
 const EMAIL_REQUEST_TIMEOUT_MS = 8_000;
@@ -38,6 +39,14 @@ function isResendConfigured() {
   );
 }
 
+function isSmtpConfigured() {
+  return Boolean(
+    process.env.SMTP_HOST?.trim() &&
+      process.env.SMTP_USER?.trim() &&
+      process.env.SMTP_PASS?.trim() &&
+      process.env.SMTP_PORT?.trim()
+  );
+}
 function isGoogleAppsScriptConfigured() {
   return Boolean(
     process.env.GOOGLE_APPS_SCRIPT_URL?.trim() &&
@@ -78,28 +87,22 @@ function getConfiguredResend() {
 }
 
 function getTransactionalEmailProviderLabel() {
+  const smtpConfigured = isSmtpConfigured();
   const resendConfigured = isResendConfigured();
   const googleAppsScriptConfigured = isGoogleAppsScriptConfigured();
 
+  if (smtpConfigured) return "Gmail SMTP";
   if (resendConfigured && googleAppsScriptConfigured) {
     return "Resend with Gmail Apps Script fallback";
   }
-
-  if (resendConfigured) {
-    return "Resend";
-  }
-
-  if (googleAppsScriptConfigured) {
-    return "Gmail via Apps Script";
-  }
+  if (resendConfigured) return "Resend";
+  if (googleAppsScriptConfigured) return "Gmail via Apps Script";
 
   return "Email provider not configured";
 }
-
 export function isTransactionalEmailConfigured() {
-  return isResendConfigured() || isGoogleAppsScriptConfigured();
+  return isSmtpConfigured() || isResendConfigured() || isGoogleAppsScriptConfigured();
 }
-
 async function sendWithGoogleAppsScript(
   input: TransactionalEmailInput
 ) {
@@ -149,10 +152,57 @@ async function sendWithGoogleAppsScript(
   }
 }
 
+async function sendWithSmtp(input: TransactionalEmailInput) {
+  const host = process.env.SMTP_HOST?.trim();
+  const port = Number(process.env.SMTP_PORT?.trim() || "465");
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_PASS;
+  const from = process.env.SMTP_FROM?.trim() || user;
+
+  if (!host || !user || !pass || !Number.isFinite(port)) {
+    throw new Error("Gmail SMTP is not fully configured.");
+  }
+
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: process.env.SMTP_SECURE?.trim().toLowerCase() === "true",
+    auth: { user, pass },
+    connectionTimeout: 20000,
+    greetingTimeout: 20000,
+    socketTimeout: 20000,
+  });
+
+  await transporter.sendMail({
+    from,
+    to: input.to,
+    subject: input.subject,
+    html: input.html,
+    messageId: `<${input.idempotencyKey}@eservice-hub.local>`,
+  });
+}
 async function sendTransactionalEmail(input: TransactionalEmailInput) {
+  const smtpConfigured = isSmtpConfigured();
+  const resendConfigured = isResendConfigured();
   const googleAppsScriptConfigured = isGoogleAppsScriptConfigured();
 
-  if (isResendConfigured()) {
+  if (smtpConfigured) {
+    try {
+      await sendWithSmtp(input);
+      return;
+    } catch (error) {
+      if (!resendConfigured && !googleAppsScriptConfigured) {
+        throw error;
+      }
+
+      console.error(
+        "GMAIL_SMTP_DELIVERY_ERROR; TRYING_CONFIGURED_FALLBACK:",
+        error instanceof Error ? error.message : "Unknown email delivery error."
+      );
+    }
+  }
+
+  if (resendConfigured) {
     try {
       const { resend, from } = getConfiguredResend();
       const { error } = await resend.emails.send(
@@ -192,7 +242,6 @@ async function sendTransactionalEmail(input: TransactionalEmailInput) {
 
   throw new Error("No transactional email provider is configured.");
 }
-
 export async function sendAdminNotificationEmail(
   input: AdminNotificationEmailInput
 ) {
@@ -265,7 +314,7 @@ export async function sendQuotationEmail(input: QuotationEmailInput) {
         <p><strong>Valid until:</strong> ${escapeHtml(input.validUntil)}</p>
         ${input.description ? `<p>${escapeHtml(input.description)}</p>` : ""}
         <p>Please keep this quotation for your records. Reply to this email if you have questions.</p>
-        <p><strong>QCE — Quality. Commitment. Excellence.</strong></p>
+        <p><strong>QCE â€” Quality. Commitment. Excellence.</strong></p>
       </div>
     `,
   });
@@ -274,3 +323,4 @@ export async function sendQuotationEmail(input: QuotationEmailInput) {
 }
 
 export { getTransactionalEmailProviderLabel };
+

@@ -1,4 +1,4 @@
-
+﻿
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -178,7 +178,7 @@ async function StaffPageContent({
             href="/admin/dashboard"
             className="admin-sidebar-link"
           >
-            <span>▦</span>
+            <span>â–¦</span>
             Dashboard
           </Link>
 
@@ -186,7 +186,7 @@ async function StaffPageContent({
             href="/admin/requests"
             className="admin-sidebar-link"
           >
-            <span>▤</span>
+            <span>â–¤</span>
             Service Requests
           </Link>
 
@@ -194,7 +194,7 @@ async function StaffPageContent({
             href="/admin/customers"
             className="admin-sidebar-link"
           >
-            <span>♙</span>
+            <span>â™™</span>
             Customers
           </Link>
 
@@ -203,10 +203,17 @@ async function StaffPageContent({
           </p>
 
           <Link
+            href="/admin/hr"
+            className="admin-sidebar-link"
+          >
+            <span>♙</span>
+            HR & Employees
+          </Link>
+          <Link
             href="/admin/staff"
             className="admin-sidebar-link active"
           >
-            <span>♧</span>
+            <span>â™§</span>
             Staff & Administrators
           </Link>
 
@@ -214,7 +221,7 @@ async function StaffPageContent({
             href="/admin/analytics"
             className="admin-sidebar-link"
           >
-            <span>▥</span>
+            <span>â–¥</span>
             Analytics & Reports
           </Link>
 
@@ -222,7 +229,7 @@ async function StaffPageContent({
             href="/admin/settings"
             className="admin-sidebar-link"
           >
-            <span>⚙</span>
+            <span>âš™</span>
             Settings
           </Link>
         </div>
@@ -244,7 +251,7 @@ async function StaffPageContent({
               type="submit"
               className="admin-logout-button"
             >
-              Sign Out →
+              Sign Out â†’
             </button>
           </form>
         </div>
@@ -285,7 +292,7 @@ async function StaffPageContent({
                 href="/admin/staff/new"
                 className="admin-personnel-add-button"
               >
-                <span>＋</span>
+                <span>ï¼‹</span>
                 Add Personnel
               </Link>
             )}
@@ -295,7 +302,7 @@ async function StaffPageContent({
           <div className="admin-personnel-stats">
             <article className="admin-personnel-stat">
               <div className="admin-personnel-stat-icon navy">
-                <span>♙</span>
+                <span>â™™</span>
               </div>
 
               <div>
@@ -307,7 +314,7 @@ async function StaffPageContent({
 
             <article className="admin-personnel-stat">
               <div className="admin-personnel-stat-icon green">
-                <span>✓</span>
+                <span>âœ“</span>
               </div>
 
               <div>
@@ -319,7 +326,7 @@ async function StaffPageContent({
 
             <article className="admin-personnel-stat">
               <div className="admin-personnel-stat-icon amber">
-                <span>Ⅱ</span>
+                <span>â…¡</span>
               </div>
 
               <div>
@@ -354,7 +361,7 @@ async function StaffPageContent({
               className="admin-personnel-filters"
             >
               <div className="admin-personnel-search">
-                <span>⌕</span>
+                <span>âŒ•</span>
 
                 <input
                   type="search"
@@ -398,7 +405,7 @@ async function StaffPageContent({
             {/* DIRECTORY RESULTS */}
             {administrators.length === 0 ? (
               <div className="admin-personnel-empty">
-                <span>♙</span>
+                <span>â™™</span>
 
                 <h3>No personnel found</h3>
 
@@ -429,7 +436,7 @@ async function StaffPageContent({
                         <p>{admin.email}</p>
 
                         <span>
-                          View personnel profile →
+                          View personnel profile â†’
                         </span>
                       </Link>
 
@@ -492,7 +499,7 @@ async function StaffPageContent({
             QUALITY. COMMITMENT. EXCELLENCE.
 
             <span>
-              E-SERVICE HUB & DIGITAL CYBER © 2026
+              E-SERVICE HUB & DIGITAL CYBER Â© 2026
             </span>
           </footer>
         </div>
@@ -518,3 +525,4 @@ export default function AdminStaffPage({
     </Suspense>
   );
 }
+

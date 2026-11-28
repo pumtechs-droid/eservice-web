@@ -60,7 +60,68 @@ enum SystemNotificationStatus {
   PROCESSING
   SENT
 }
+enum EmploymentStatus {
+  ACTIVE
+  ON_LEAVE
+  SUSPENDED
+  INACTIVE
+}
 
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  TEMPORARY
+}
+
+enum EmploymentChangeType {
+  HIRED
+  PROMOTION
+  DEPARTMENT_TRANSFER
+  JOB_TITLE_CHANGE
+  STATUS_CHANGE
+  OTHER
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  EXCUSED
+}
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  MATERNITY
+  PATERNITY
+  COMPASSIONATE
+  UNPAID
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
 // ==========================================
 // ADMINISTRATOR ACCOUNTS
 // ==========================================
@@ -83,7 +144,8 @@ model AdminUser {
   activities        RequestActivity[]
   quotationsCreated ServiceQuotation[]
   paymentsRecorded  Payment[]
-
+  employmentChangesRecorded EmployeeEmploymentHistory[] @relation("EmploymentChangesRecorded")
+  employee Employee?
   @@index([role])
   @@index([isActive])
 }
@@ -105,6 +167,7 @@ model Customer {
   updatedAt              DateTime  @updatedAt
 
   requests ServiceRequest[]
+  ratings CustomerRating[]
 
   @@index([phone])
   @@index([email])
@@ -128,6 +191,7 @@ model ServiceRequest {
   activities RequestActivity[]
   quotations ServiceQuotation[]
   payments   Payment[]
+  customerRating CustomerRating?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -275,4 +339,218 @@ model SystemNotification {
 
   @@index([status, availableAt])
   @@index([createdAt])
+}
+// ==========================================
+// HR: DEPARTMENTS
+// ==========================================
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employees Employee[]
+
+  @@index([isActive])
+}
+// ==========================================
+// HR: EMPLOYEES
+// ==========================================
+
+model Employee {
+  id              String           @id @default(uuid())
+  staffId         String           @unique
+  fullName        String
+  email           String?
+  phone           String
+  alternatePhone  String?
+  photoUrl        String?
+  jobTitle        String
+  employmentType  EmploymentType   @default(FULL_TIME)
+  employmentStatus EmploymentStatus @default(ACTIVE)
+  joiningDate     DateTime
+  notes           String?
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+
+  // Optional link to an administrator login account
+  adminUserId String?    @unique
+  adminUser   AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  // Reporting manager
+  managerId String?
+  manager   Employee?  @relation("EmployeeReporting", fields: [managerId], references: [id], onDelete: SetNull)
+  team      Employee[] @relation("EmployeeReporting")
+
+  employmentHistory EmployeeEmploymentHistory[]
+  assignedTasks     StaffTask[] @relation("AssignedTasks")
+  createdTasks      StaffTask[] @relation("CreatedTasks")
+  attendance        Attendance[]
+  customerRatings CustomerRating[]
+  leaveRequests     LeaveRequest[] @relation("EmployeeLeaveRequests")
+  reviewedLeaves    LeaveRequest[] @relation("LeaveReviewedBy")
+  performanceReviews PerformanceReview[] @relation("EmployeeReviews")
+  reviewsGiven       PerformanceReview[] @relation("ReviewsGiven")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fullName])
+  @@index([departmentId])
+  @@index([employmentStatus])
+  @@index([managerId])
+}
+// ==========================================
+// HR: EMPLOYMENT HISTORY
+// ==========================================
+
+model EmployeeEmploymentHistory {
+  id          String               @id @default(uuid())
+  employeeId  String
+  changeType  EmploymentChangeType
+  effectiveAt DateTime
+  oldValue    String?
+  newValue    String?
+  reason      String?
+  notes       String?
+
+  
+  recordedById  String?
+  recordedAt    DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  recordedBy AdminUser? @relation("EmploymentChangesRecorded", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([employeeId, effectiveAt])
+  @@index([changeType])
+}
+// ==========================================
+// HR: STAFF TASKS
+// ==========================================
+
+model StaffTask {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus   @default(PENDING)
+  priority    TaskPriority  @default(NORMAL)
+  dueDate     DateTime?
+  completedAt DateTime?
+
+  employeeId String
+  employee   Employee @relation("AssignedTasks", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  assignedById String
+  assignedBy   Employee @relation("CreatedTasks", fields: [assignedById], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId, status])
+  @@index([assignedById])
+  @@index([dueDate])
+}
+// ==========================================
+// HR: STAFF ATTENDANCE
+// ==========================================
+
+model Attendance {
+  id        String           @id @default(uuid())
+  date      DateTime
+  status    AttendanceStatus @default(PRESENT)
+  checkIn   DateTime?
+  checkOut  DateTime?
+  notes     String?
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  recordedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([employeeId, date])
+  @@index([date, status])
+}
+// ==========================================
+// HR: LEAVE MANAGEMENT
+// ==========================================
+
+model LeaveRequest {
+  id          String     @id @default(uuid())
+  leaveType   LeaveType
+  status      LeaveStatus @default(PENDING)
+  startDate   DateTime
+  endDate     DateTime
+  reason      String
+  reviewNotes String?
+
+  employeeId String
+  employee   Employee @relation("EmployeeLeaveRequests", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  reviewedById String?
+  reviewedBy   Employee? @relation("LeaveReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  reviewedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([employeeId, status])
+  @@index([startDate, endDate])
+}
+// ==========================================
+// HR: PERFORMANCE REVIEWS
+// ==========================================
+
+model PerformanceReview {
+  id          String   @id @default(uuid())
+  reviewDate  DateTime
+  periodStart DateTime
+  periodEnd   DateTime
+  rating      Int
+  strengths   String?
+  improvements String?
+  comments    String?
+  goals       String?
+
+  employeeId String
+  employee   Employee @relation("EmployeeReviews", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  reviewerId String
+  reviewer   Employee @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId, reviewDate])
+  @@index([reviewerId])
+}
+// ==========================================
+// HR: CUSTOMER SERVICE RATINGS
+// ==========================================
+
+model CustomerRating {
+  id        String   @id @default(uuid())
+  rating    Int
+  feedback  String?
+  ratedAt   DateTime @default(now())
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  requestId String @unique
+  request   ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId, ratedAt])
+  @@index([employeeId, ratedAt])
+  @@index([rating])
 }
