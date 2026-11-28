@@ -6,15 +6,13 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
 
+import "./dashboard.css";
+
 async function AdminDashboardContent() {
-  // Verify the administrator session.
   const session = await getAdminSession();
 
-  if (!session) {
-    redirect("/admin/login");
-  }
+  if (!session) redirect("/admin/login");
 
-  // Verify that the administrator still exists and is active.
   const admin = await prisma.adminUser.findUnique({
     where: { id: session.id },
     select: {
@@ -27,11 +25,8 @@ async function AdminDashboardContent() {
     },
   });
 
-  if (!admin || !admin.isActive) {
-    redirect("/admin/login");
-  }
+  if (!admin || !admin.isActive) redirect("/admin/login");
 
-  // Retrieve dashboard statistics.
   const [
     totalRequests,
     newRequests,
@@ -39,6 +34,7 @@ async function AdminDashboardContent() {
     completedRequests,
     totalCustomers,
     totalAdmins,
+    recentRequests,
   ] = await Promise.all([
     prisma.serviceRequest.count(),
 
@@ -68,186 +64,331 @@ async function AdminDashboardContent() {
     prisma.adminUser.count({
       where: { isActive: true },
     }),
-  ]);
 
-  // Retrieve the latest eight customer requests.
-  const recentRequests = await prisma.serviceRequest.findMany({
-    take: 8,
-    orderBy: { createdAt: "desc" },
-    select: {
-      reference: true,
-      department: true,
-      service: true,
-      status: true,
-      createdAt: true,
-      customer: {
-        select: {
-          fullName: true,
-          phone: true,
+    prisma.serviceRequest.findMany({
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      select: {
+        reference: true,
+        department: true,
+        service: true,
+        status: true,
+        createdAt: true,
+        customer: {
+          select: {
+            fullName: true,
+            phone: true,
+          },
         },
       },
-    },
-  });
+    }),
+  ]);
+
+  const completionRate =
+    totalRequests > 0
+      ? Math.round((completedRequests / totalRequests) * 100)
+      : 0;
 
   const statistics = [
-    { label: "Total Requests", value: totalRequests, icon: "📋" },
-    { label: "New Requests", value: newRequests, icon: "🆕" },
-    { label: "Active Requests", value: activeRequests, icon: "⚙️" },
-    { label: "Completed Requests", value: completedRequests, icon: "✅" },
-    { label: "Total Customers", value: totalCustomers, icon: "👥" },
-    { label: "Active Administrators", value: totalAdmins, icon: "🛡️" },
+    {
+      label: "Total Requests",
+      value: totalRequests,
+      icon: "▤",
+      color: "blue",
+      description: "All submitted requests",
+    },
+    {
+      label: "New Requests",
+      value: newRequests,
+      icon: "✦",
+      color: "gold",
+      description: "Awaiting attention",
+    },
+    {
+      label: "Active Requests",
+      value: activeRequests,
+      icon: "◷",
+      color: "purple",
+      description: "Currently being processed",
+    },
+    {
+      label: "Completed Requests",
+      value: completedRequests,
+      icon: "✓",
+      color: "green",
+      description: "Successfully completed",
+    },
+    {
+      label: "Total Customers",
+      value: totalCustomers,
+      icon: "♙",
+      color: "cyan",
+      description: "Registered customers",
+    },
+    {
+      label: "Active Administrators",
+      value: totalAdmins,
+      icon: "♧",
+      color: "dark",
+      description: "Active admin accounts",
+    },
   ];
 
   function formatStatus(status: string) {
     return status.replaceAll("_", " ");
   }
 
-  return (
-    <main className="admin-dashboard">
-      <aside className="admin-sidebar">
-        <Link href="/admin/dashboard" className="admin-sidebar-brand">
-          <span className="admin-brand-mark">ESH</span>
+  function formatDate(date: Date) {
+    return date.toLocaleDateString("en-KE", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
 
-          <span>
-            <strong>E-SERVICE HUB</strong>
-            <small>ADMINISTRATION</small>
+  return (
+    <main className="esh-dashboard">
+      <aside className="esh-sidebar">
+        <Link href="/admin/dashboard" className="esh-brand">
+          <span className="esh-logo">ESH</span>
+          <strong>E-SERVICE HUB</strong>
+          <small>& DIGITAL CYBER</small>
+          <span className="esh-tagline">
+            Quality. Commitment. Excellence.
           </span>
         </Link>
 
-        <div className="admin-sidebar-section">
-          <p className="admin-sidebar-heading">WORKSPACE</p>
+        <div className="esh-nav-label">MAIN WORKSPACE</div>
 
-          <Link
-            href="/admin/dashboard"
-            className="admin-sidebar-link active"
-          >
+        <nav className="esh-navigation">
+          <Link href="/admin/dashboard" className="esh-nav-link active">
             <span>▦</span> Dashboard
           </Link>
 
-          <Link href="/admin/requests" className="admin-sidebar-link">
+          <Link href="/admin/requests" className="esh-nav-link">
             <span>▤</span> Service Requests
           </Link>
 
-          <Link href="/admin/customers" className="admin-sidebar-link">
+          <Link href="/admin/customers" className="esh-nav-link">
             <span>♙</span> Customers
           </Link>
 
-          <p className="admin-sidebar-heading">MANAGEMENT</p>
+          <div className="esh-nav-label">MANAGEMENT</div>
 
-          <Link href="/admin/staff" className="admin-sidebar-link">
+          <Link href="/admin/staff" className="esh-nav-link">
             <span>♧</span> Staff & Administrators
           </Link>
 
-          <Link href="/admin/analytics" className="admin-sidebar-link">
-            <span>▥</span> Analytics & Reports
+          <Link href="/admin/finance" className="esh-nav-link">
+            <span>▣</span> Finance & Payments
           </Link>
+        </nav>
 
-          <Link href="/admin/cms" className="admin-sidebar-link">
-            <span>◇</span> Content Management
-          </Link>
+        <div className="esh-sidebar-bottom">
+          <div className="esh-support">
+            <span>◉</span>
+            <div>
+              <strong>Administration</strong>
+              <small>Secure workspace</small>
+            </div>
+          </div>
 
-          <Link href="/admin/settings" className="admin-sidebar-link">
-            <span>⚙</span> Settings
-          </Link>
-        </div>
-
-        <div className="admin-sidebar-bottom">
-          <div className="admin-sidebar-user">
-            <div className="admin-avatar">
+          <div className="esh-user">
+            <div className="esh-avatar">
               {admin.fullName.charAt(0).toUpperCase()}
             </div>
 
-            <div>
+            <div className="esh-user-details">
               <strong>{admin.fullName}</strong>
               <small>{admin.role.replaceAll("_", " ")}</small>
             </div>
           </div>
 
           <form action="/api/admin/logout" method="POST">
-            <button type="submit" className="admin-logout-button">
-              Sign Out →
+            <button type="submit" className="esh-logout">
+              Sign out <span>→</span>
             </button>
           </form>
         </div>
       </aside>
 
-      <section className="admin-main">
-        <header className="admin-topbar">
+      <section className="esh-main">
+        <header className="esh-topbar">
           <div>
-            <p>ADMINISTRATION / OVERVIEW</p>
+            <span className="esh-breadcrumb">
+              ADMINISTRATION / OVERVIEW
+            </span>
             <h1>Dashboard</h1>
           </div>
 
-          <div className="admin-topbar-account">
-            <span className="admin-status-dot" />
-            <span>Administrator</span>
+          <div className="esh-topbar-right">
+            <span className="esh-online">
+              <i /> System operational
+            </span>
+            <div className="esh-admin-chip">
+              <span className="esh-admin-chip-icon">♛</span>
+              <div>
+                <strong>SUPER ADMINISTRATION</strong>
+                <small>{admin.email}</small>
+              </div>
+            </div>
           </div>
         </header>
 
-        <div className="admin-welcome">
+        <section className="esh-welcome">
           <div>
-            <p className="admin-welcome-label">CONTROL CENTRE</p>
-
-            <h2>Welcome back, {admin.fullName}!</h2>
-
+            <span className="esh-eyebrow">CONTROL CENTRE</span>
+            <h2>Welcome back, {admin.fullName.split(" ")[0]}!</h2>
             <p>
-              Monitor operations, manage customer requests and oversee
-              E-SERVICE HUB activities from one secure workspace.
+              Your central workspace for monitoring services,
+              customers and business operations.
             </p>
           </div>
 
-          <div className="admin-welcome-badge">
-            <span>🛡️</span>
-
-            <div>
-              <strong>{admin.role.replaceAll("_", " ")}</strong>
-              <small>Verified account</small>
-            </div>
+          <div className="esh-welcome-mark">
+            <span>ESH</span>
+            <small>QUALITY. COMMITMENT. EXCELLENCE.</small>
           </div>
-        </div>
+        </section>
 
-        <div className="admin-section-heading">
+        <div className="esh-section-title">
           <div>
             <h2>Operational Overview</h2>
-            <p>Current service and administration statistics.</p>
+            <p>Your organisation&apos;s current performance at a glance.</p>
           </div>
+          <span className="esh-live-label">LIVE DATABASE STATISTICS</span>
         </div>
 
-        <div className="admin-stat-grid">
+        <section className="esh-stat-grid">
           {statistics.map((stat) => (
-            <article className="admin-stat-card" key={stat.label}>
-              <div className="admin-stat-top">
+            <article
+              className={`esh-stat-card esh-${stat.color}`}
+              key={stat.label}
+            >
+              <div className="esh-stat-heading">
                 <span>{stat.label}</span>
-                <span className="admin-stat-icon">{stat.icon}</span>
+                <span className="esh-stat-icon">{stat.icon}</span>
               </div>
 
-              <strong>{stat.value.toLocaleString()}</strong>
-              <small>Database records</small>
+              <strong className="esh-stat-value">
+                {stat.value.toLocaleString("en-KE")}
+              </strong>
+
+              <small>{stat.description}</small>
             </article>
           ))}
-        </div>
+        </section>
 
-        <section className="admin-recent-section">
-          <div className="admin-section-heading">
-            <div>
-              <h2>Recent Service Requests</h2>
-              <p>The latest customer submissions.</p>
+        <section className="esh-content-grid">
+          <article className="esh-panel esh-performance">
+            <div className="esh-panel-heading">
+              <div>
+                <h2>Service Performance</h2>
+                <p>Completed requests against all submitted requests.</p>
+              </div>
+              <span className="esh-panel-icon">◈</span>
             </div>
 
-            <Link href="/admin/requests" className="admin-view-all">
+            <div className="esh-completion-number">
+              {completionRate}%
+              <small>Completion rate</small>
+            </div>
+
+            <div
+              className="esh-progress-track"
+              role="progressbar"
+              aria-label="Request completion rate"
+              aria-valuenow={completionRate}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div
+                className="esh-progress-fill"
+                style={{ width: `${completionRate}%` }}
+              />
+            </div>
+
+            <div className="esh-progress-details">
+              <span>
+                <i className="esh-dot-green" /> {completedRequests} completed
+              </span>
+              <span>{totalRequests} total requests</span>
+            </div>
+
+            <div className="esh-performance-footer">
+              <div>
+                <strong>{newRequests.toLocaleString("en-KE")}</strong>
+                <small>New requests</small>
+              </div>
+              <div>
+                <strong>{activeRequests.toLocaleString("en-KE")}</strong>
+                <small>Active requests</small>
+              </div>
+              <div>
+                <strong>{totalCustomers.toLocaleString("en-KE")}</strong>
+                <small>Customers</small>
+              </div>
+            </div>
+          </article>
+
+          <article className="esh-panel esh-quick-actions">
+            <div className="esh-panel-heading">
+              <div>
+                <h2>Quick Actions</h2>
+                <p>Navigate to key administration areas.</p>
+              </div>
+              <span className="esh-panel-icon">⚡</span>
+            </div>
+
+            <div className="esh-action-grid">
+              <Link href="/admin/requests" className="esh-action-card">
+                <span>＋</span>
+                <strong>View Requests</strong>
+                <small>Manage submissions</small>
+              </Link>
+
+              <Link href="/admin/customers" className="esh-action-card">
+                <span>♙</span>
+                <strong>Customers</strong>
+                <small>Customer records</small>
+              </Link>
+
+              <Link href="/admin/staff" className="esh-action-card">
+                <span>♧</span>
+                <strong>Manage Staff</strong>
+                <small>Team administration</small>
+              </Link>
+
+              <Link href="/admin/finance" className="esh-action-card">
+                <span>▣</span>
+                <strong>Finance</strong>
+                <small>Payments & reports</small>
+              </Link>
+            </div>
+          </article>
+        </section>
+
+        <section className="esh-panel esh-recent">
+          <div className="esh-panel-heading">
+            <div>
+              <h2>Recent Service Requests</h2>
+              <p>The eight most recent customer submissions.</p>
+            </div>
+
+            <Link href="/admin/requests" className="esh-view-all">
               View all requests →
             </Link>
           </div>
 
-          <div className="admin-table-wrapper">
-            <table className="admin-table">
+          <div className="esh-table-scroll">
+            <table className="esh-table">
               <thead>
                 <tr>
-                  <th>Reference</th>
-                  <th>Customer</th>
-                  <th>Service</th>
-                  <th>Status</th>
-                  <th>Date Submitted</th>
+                  <th>REFERENCE</th>
+                  <th>CUSTOMER</th>
+                  <th>SERVICE</th>
+                  <th>STATUS</th>
+                  <th>DATE SUBMITTED</th>
                 </tr>
               </thead>
 
@@ -256,7 +397,9 @@ async function AdminDashboardContent() {
                   recentRequests.map((request) => (
                     <tr key={request.reference}>
                       <td>
-                        <strong>{request.reference}</strong>
+                        <strong className="esh-reference">
+                          {request.reference}
+                        </strong>
                       </td>
 
                       <td>
@@ -270,23 +413,19 @@ async function AdminDashboardContent() {
                       </td>
 
                       <td>
-                        <span className="admin-status-label">
+                        <span
+                          className={`esh-status esh-status-${request.status.toLowerCase()}`}
+                        >
                           {formatStatus(request.status)}
                         </span>
                       </td>
 
-                      <td>
-                        {request.createdAt.toLocaleDateString("en-KE", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </td>
+                      <td>{formatDate(request.createdAt)}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="admin-empty-state">
+                    <td colSpan={5} className="esh-empty">
                       No service requests have been submitted yet.
                     </td>
                   </tr>
@@ -296,8 +435,8 @@ async function AdminDashboardContent() {
           </div>
         </section>
 
-        <footer className="admin-dashboard-footer">
-          QUALITY. COMMITMENT. EXCELLENCE.
+        <footer className="esh-footer">
+          <span>QUALITY. COMMITMENT. EXCELLENCE.</span>
           <span>E-SERVICE HUB & DIGITAL CYBER © 2026</span>
         </footer>
       </section>
@@ -305,15 +444,12 @@ async function AdminDashboardContent() {
   );
 }
 
-// Suspense boundary handles session cookies during prerendering.
 export default function AdminDashboardPage() {
   return (
     <Suspense
       fallback={
-        <main className="admin-dashboard">
-          <section className="admin-main">
-            <p>Loading administration dashboard...</p>
-          </section>
+        <main className="esh-loading">
+          Loading administration dashboard...
         </main>
       }
     >
